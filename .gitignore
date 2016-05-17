@@ -1,0 +1,8 @@
+/.gradle/
+/build/
+/out/
+/verifiable-log.iml
+/verifiable-log.ipr
+/verifiable-log.iws
+.idea/
+.idea_modules/
