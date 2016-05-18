@@ -1,9 +1,11 @@
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'maven'
 apply from: 'external-dependencies.gradle'
 apply from: 'idea-config.gradle'
 
 group 'verifiable-log'
+version '0.1-SNAPSHOT'
 
 sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
