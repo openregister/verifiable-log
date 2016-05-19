@@ -2,26 +2,25 @@ package uk.gov.verifiablelog.merkletree;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class MerkleTree {
 
     private final MessageDigest messageDigest;
 
-    private List<byte[]> leafValues;
+    private Function<Integer, byte[]> leafDAOFunction;
+    private Supplier<Integer> leafSizeDAOFunction;
 
-    public MerkleTree(MessageDigest messageDigest) {
+    public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction) {
         this.messageDigest = messageDigest;
-        leafValues = new ArrayList<>();
+        this.leafDAOFunction = leafDAOFunction;
+        this.leafSizeDAOFunction = leafSizeDAOFunction;
     }
 
     public byte[] currentRoot() {
-        return subtreeHash(0, leafValues.size());
-    }
-
-    public void addLeaf(byte[] bytes) {
-        leafValues.add(bytes);
+        return subtreeHash(0, leafSizeDAOFunction.get());
     }
 
     public List<byte[]> pathToRootAtSnapshot(int leafIndex, int snapshotSize) {
@@ -80,7 +79,7 @@ public class MerkleTree {
         if (size == 0) {
             return emptyTree();
         } else if (size == 1) {
-            return singleLeafTree(leafValues.get(start));
+            return singleLeafTree(leafDAOFunction.apply(start));
         } else {
             int mid = start + k(size);
             byte[] leftSubtreeHash = subtreeHash(start, mid);
