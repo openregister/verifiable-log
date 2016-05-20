@@ -20,6 +20,7 @@ repositories {
 
 dependencies {
     testCompile junit
+    testCompile 'org.quicktheories:quicktheories:0.12'
 }
 
 jar.baseName = "verifiable-log"
