@@ -2,6 +2,7 @@ package uk.gov.verifiablelog.merkletree;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -12,14 +13,19 @@ public class MerkleTree {
 
     private Function<Integer, byte[]> leafDAOFunction;
     private Supplier<Integer> leafSizeDAOFunction;
+    private final Iterable<byte[]> entryIterable;
 
-    public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction) {
+    private Iterator<byte[]> currentIterator;
+
+    public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction, Iterable<byte[]> entryIterable) {
         this.messageDigest = messageDigest;
         this.leafDAOFunction = leafDAOFunction;
         this.leafSizeDAOFunction = leafSizeDAOFunction;
+        this.entryIterable = entryIterable;
     }
 
     public byte[] currentRoot() {
+        currentIterator = entryIterable.iterator();
         return subtreeHash(0, leafSizeDAOFunction.get());
     }
 
@@ -79,7 +85,7 @@ public class MerkleTree {
         if (size == 0) {
             return emptyTree();
         } else if (size == 1) {
-            return singleLeafTree(leafDAOFunction.apply(start));
+            return singleLeafTree(currentIterator.next());
         } else {
             int mid = start + k(size);
             byte[] leftSubtreeHash = subtreeHash(start, mid);

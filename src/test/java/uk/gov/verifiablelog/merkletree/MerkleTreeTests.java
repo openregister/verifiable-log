@@ -38,7 +38,7 @@ public class MerkleTreeTests {
     @Before
     public void setup() throws NoSuchAlgorithmException {
         leafValues = new ArrayList<>();
-        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), i -> leafValues.get(i), () -> leafValues.size());
+        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), i -> leafValues.get(i), () -> leafValues.size(), leafValues);
     }
 
     @Test
@@ -168,7 +168,7 @@ public class MerkleTreeTests {
 
     private MerkleTree sha256MerkleTree(Function<Integer, byte[]> leafAccessFunction, Supplier<Integer> leafSizeFunction) {
         try {
-            return new MerkleTree(MessageDigest.getInstance("SHA-256"), leafAccessFunction, leafSizeFunction);
+            return new MerkleTree(MessageDigest.getInstance("SHA-256"), leafAccessFunction, leafSizeFunction, null);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("can't happen"); // can't happen, SHA-256 is guaranteed
         }
