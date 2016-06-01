@@ -9,8 +9,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
@@ -38,7 +39,7 @@ public class MerkleTreeTests {
     @Before
     public void setup() throws NoSuchAlgorithmException {
         leafValues = new ArrayList<>();
-        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), i -> leafValues.get(i), () -> leafValues.size(), leafValues);
+        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), (i, j) -> leafValues.subList(i, j).iterator(), () -> leafValues.size());
     }
 
     @Test
@@ -141,7 +142,7 @@ public class MerkleTreeTests {
         Source<String> source = strings().allPossible().ofLengthBetween(0,50);
         qt().forAll(lists().allListsOf(source).ofSizeBetween(0,50))
                 .check(entries -> {
-                    MerkleTree merkleTree = sha256MerkleTree(i -> entries.get(i).getBytes(), entries::size);
+                    MerkleTree merkleTree = sha256MerkleTree((i, j) -> entries.subList(i, j).stream().map(String::getBytes).iterator(), entries::size);
                     return merkleTree.currentRoot().length == 32;
                 });
     }
@@ -160,15 +161,15 @@ public class MerkleTreeTests {
     public void property_auditPathLengthForIndex0IsTreeHeightMinusOne() throws Exception {
         qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000))
                 .check(entries -> {
-                    MerkleTree merkleTree = sha256MerkleTree(i -> entries.get(i).getBytes(), entries::size);
+                    MerkleTree merkleTree = sha256MerkleTree((i, j) -> entries.subList(i, j).stream().map(String::getBytes).iterator(), entries::size);
                     List<byte[]> auditPath = merkleTree.pathToRootAtSnapshot(0, entries.size());
                     return auditPath.size() == treeHeightForSize(entries.size()) - 1;
                 });
     }
 
-    private MerkleTree sha256MerkleTree(Function<Integer, byte[]> leafAccessFunction, Supplier<Integer> leafSizeFunction) {
+    private MerkleTree sha256MerkleTree(BiFunction<Integer, Integer, Iterator<byte[]>> leafAccessFunction, Supplier<Integer> leafSizeFunction) {
         try {
-            return new MerkleTree(MessageDigest.getInstance("SHA-256"), leafAccessFunction, leafSizeFunction, null);
+            return new MerkleTree(MessageDigest.getInstance("SHA-256"), leafAccessFunction, leafSizeFunction);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("can't happen"); // can't happen, SHA-256 is guaranteed
         }

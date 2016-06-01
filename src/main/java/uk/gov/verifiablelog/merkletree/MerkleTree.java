@@ -1,32 +1,26 @@
 package uk.gov.verifiablelog.merkletree;
 
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.function.Function;
+import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public class MerkleTree {
 
     private final MessageDigest messageDigest;
 
-    private Function<Integer, byte[]> leafDAOFunction;
-    private Supplier<Integer> leafSizeDAOFunction;
-    private final Iterable<byte[]> entryIterable;
+    private final BiFunction<Integer, Integer, Iterator<byte[]>> leafDAOFunction;
+    private final Supplier<Integer> leafSizeDAOFunction;
 
-    private Iterator<byte[]> currentIterator;
 
-    public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction, Iterable<byte[]> entryIterable) {
+    public MerkleTree(MessageDigest messageDigest, BiFunction<Integer, Integer, Iterator<byte[]>> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction) {
         this.messageDigest = messageDigest;
         this.leafDAOFunction = leafDAOFunction;
         this.leafSizeDAOFunction = leafSizeDAOFunction;
-        this.entryIterable = entryIterable;
     }
 
     public byte[] currentRoot() {
-        currentIterator = entryIterable.iterator();
-        return subtreeHash(0, leafSizeDAOFunction.get());
+        return subtreeHash(0, leafSizeDAOFunction.get(), leafDAOFunction.apply(0, leafSizeDAOFunction.get()));
     }
 
     public List<byte[]> pathToRootAtSnapshot(int leafIndex, int snapshotSize) {
@@ -45,18 +39,18 @@ public class MerkleTree {
                 return new ArrayList<>();
             }
             List<byte[]> consistencySet = new ArrayList<>();
-            consistencySet.add(subtreeHash(start,end));
+            consistencySet.add(subtreeHash(start, end, leafDAOFunction.apply(start, end)));
             return consistencySet;
         }
         int k = k(size);
         int mid = start + k;
         if (m <= k) {
             List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(start, mid, m);
-            subtreeConsistencySet.add(subtreeHash(mid, end));
+            subtreeConsistencySet.add(subtreeHash(mid, end, leafDAOFunction.apply(mid, end)));
             return subtreeConsistencySet;
         } else {
             List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(mid, end, m - k);
-            subtreeConsistencySet.add(subtreeHash(start, mid));
+            subtreeConsistencySet.add(subtreeHash(start, mid, leafDAOFunction.apply(start, mid)));
             return subtreeConsistencySet;
         }
     }
@@ -70,26 +64,26 @@ public class MerkleTree {
         int mid = start + k(size);
         if (leafIndex < mid) {
             List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, start, mid);
-            subtreePath.add(subtreeHash(mid, end));
+            subtreePath.add(subtreeHash(mid, end, leafDAOFunction.apply(mid, end)));
             return subtreePath;
         } else {
             List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, mid, end);
-            subtreePath.add(subtreeHash(start, mid));
+            subtreePath.add(subtreeHash(start, mid, leafDAOFunction.apply(start, mid)));
             return subtreePath;
         }
     }
 
     // hash of subtree from start (inclusive) to end (exclusive)
-    private byte[] subtreeHash(int start, int end) {
+    private byte[] subtreeHash(int start, int end, Iterator<byte[]> iterator) {
         int size = end - start;
         if (size == 0) {
             return emptyTree();
         } else if (size == 1) {
-            return singleLeafTree(currentIterator.next());
+            return singleLeafTree(iterator.next());
         } else {
             int mid = start + k(size);
-            byte[] leftSubtreeHash = subtreeHash(start, mid);
-            byte[] rightSubtreeHash = subtreeHash(mid, end);
+            byte[] leftSubtreeHash = subtreeHash(start, mid, iterator);
+            byte[] rightSubtreeHash = subtreeHash(mid, end, iterator);
             return intermediateNode(leftSubtreeHash, rightSubtreeHash);
         }
     }
