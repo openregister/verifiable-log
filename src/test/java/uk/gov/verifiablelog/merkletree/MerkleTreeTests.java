@@ -167,6 +167,47 @@ public class MerkleTreeTests {
                 });
     }
 
+    @Test
+    public void property_canConstructRootHashFromLeafAndAuditPath() throws Exception {
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000))
+                .check(entries -> {
+                    MerkleTree merkleTree = sha256MerkleTree((i, j) -> entries.subList(i, j).stream().map(String::getBytes).iterator(), entries::size);
+                    int leafIndex = 0;
+                    List<byte[]> auditPath = merkleTree.pathToRootAtSnapshot(leafIndex, entries.size());
+                    return isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex).getBytes());
+                });
+    }
+
+    private boolean isValidAuditProof(byte[] rootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
+        // TODO: use leafIndex to hash in correct order
+        byte[] hashAccumulator = leafHash(leafData);
+        for (byte[] uncle : auditPath) {
+            hashAccumulator = branchHash(hashAccumulator, uncle);
+        }
+        return Arrays.equals(hashAccumulator, rootHash);
+    }
+
+    private byte[] branchHash(byte[] left, byte[] right) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(new byte[] {0x01});
+            digest.update(left);
+            return digest.digest(right);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("can't happen", e);
+        }
+    }
+
+    private byte[] leafHash(byte[] leafData) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(new byte[] {0x00});
+            return digest.digest(leafData);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("can't happen", e);
+        }
+    }
+
     private MerkleTree sha256MerkleTree(BiFunction<Integer, Integer, Iterator<byte[]>> leafAccessFunction, Supplier<Integer> leafSizeFunction) {
         try {
             return new MerkleTree(MessageDigest.getInstance("SHA-256"), leafAccessFunction, leafSizeFunction);
