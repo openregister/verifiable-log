@@ -103,7 +103,7 @@ public class MerkleTree {
         return messageDigest.digest(right);
     }
 
-    private int k(int n) {
+    public static int k(int n) {
         assert n > 1;
 
         int split = 1;
