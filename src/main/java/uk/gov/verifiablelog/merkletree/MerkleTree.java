@@ -42,7 +42,7 @@ public class MerkleTree {
             consistencySet.add(subtreeHash(start, end, leafDAOFunction.apply(start, end)));
             return consistencySet;
         }
-        int k = k(size);
+        int k = Util.k(size);
         int mid = start + k;
         if (m <= k) {
             List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(start, mid, m);
@@ -61,7 +61,7 @@ public class MerkleTree {
         if (size <= 1) {
             return new ArrayList<>();
         }
-        int mid = start + k(size);
+        int mid = start + Util.k(size);
         if (leafIndex < mid) {
             List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, start, mid);
             subtreePath.add(subtreeHash(mid, end, leafDAOFunction.apply(mid, end)));
@@ -79,39 +79,16 @@ public class MerkleTree {
         if (size == 0) {
             return emptyTree();
         } else if (size == 1) {
-            return singleLeafTree(iterator.next());
+            return Util.leafHash(iterator.next(), messageDigest);
         } else {
-            int mid = start + k(size);
+            int mid = start + Util.k(size);
             byte[] leftSubtreeHash = subtreeHash(start, mid, iterator);
             byte[] rightSubtreeHash = subtreeHash(mid, end, iterator);
-            return intermediateNode(leftSubtreeHash, rightSubtreeHash);
+            return Util.branchHash(leftSubtreeHash, rightSubtreeHash, messageDigest);
         }
     }
 
     private byte[] emptyTree() {
         return messageDigest.digest();
-    }
-
-    private byte[] singleLeafTree(byte[] input) {
-        messageDigest.update((byte) 0);
-        return messageDigest.digest(input);
-    }
-
-    private byte[] intermediateNode(byte[] left, byte[] right) {
-        messageDigest.update((byte) 1);
-        messageDigest.update(left);
-        return messageDigest.digest(right);
-    }
-
-    public static int k(int n) {
-        assert n > 1;
-
-        int split = 1;
-        do {
-            split <<= 1;
-        } while (split < n);
-
-        // Get the largest power of two smaller than i.
-        return split >> 1;
     }
 }

@@ -19,7 +19,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.quicktheories.quicktheories.QuickTheory.qt;
 import static org.quicktheories.quicktheories.generators.SourceDSL.*;
-import static uk.gov.verifiablelog.merkletree.MerkleTree.k;
 
 public class MerkleTreeTests {
 
@@ -175,51 +174,8 @@ public class MerkleTreeTests {
                 .check((entries, leafIndex) -> {
                     MerkleTree merkleTree = sha256MerkleTree((i, j) -> entries.subList(i, j).stream().map(String::getBytes).iterator(), entries::size);
                     List<byte[]> auditPath = merkleTree.pathToRootAtSnapshot(leafIndex, entries.size());
-                    return isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex).getBytes());
+                    return MerkleTreeVerification.isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex).getBytes());
                 });
-    }
-
-    private static boolean isValidAuditProof(byte[] rootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
-        byte[] computedRootHash = rootHashFromAuditPath(treeSize, leafIndex, new ArrayList<>(auditPath), leafData);
-        return Arrays.equals(computedRootHash, rootHash);
-    }
-
-    private static byte[] rootHashFromAuditPath(int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
-        if (treeSize == 1) {
-            assert auditPath.isEmpty();
-            return leafHash(leafData);
-        }
-        int k = k(treeSize);
-        byte[] nextHash = auditPath.remove(auditPath.size() - 1);
-        if (leafIndex < k) {
-            byte[] leftChild = rootHashFromAuditPath(k, leafIndex, auditPath, leafData);
-            return branchHash(leftChild, nextHash);
-        }
-        else {
-            byte[] rightChild = rootHashFromAuditPath(treeSize - k, leafIndex - k, auditPath, leafData);
-            return branchHash(nextHash, rightChild);
-        }
-    }
-
-    private static byte[] branchHash(byte[] left, byte[] right) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            digest.update(new byte[] {0x01});
-            digest.update(left);
-            return digest.digest(right);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("can't happen", e);
-        }
-    }
-
-    private static byte[] leafHash(byte[] leafData) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            digest.update(new byte[] {0x00});
-            return digest.digest(leafData);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("can't happen", e);
-        }
     }
 
     private MerkleTree sha256MerkleTree(BiFunction<Integer, Integer, Iterator<byte[]>> leafAccessFunction, Supplier<Integer> leafSizeFunction) {
