@@ -140,10 +140,11 @@ public class MerkleTreeTests {
     public void property_canConstructRootHashFromLeafAndAuditPath() throws Exception {
         qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000), integers().between(0,999))
                 .assuming((entries, leafIndex) -> leafIndex < entries.size())
-                .check((entries, leafIndex) -> {
-                    MerkleTree merkleTree = sha256MerkleTree((i, j) -> entries.subList(i, j).stream().map(String::getBytes).iterator(), entries::size);
+                .check((entryStrings, leafIndex) -> {
+                    List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
+                    MerkleTree merkleTree = sha256MerkleTree((i, j) -> entries.subList(i, j).stream().iterator(), entries::size);
                     List<byte[]> auditPath = merkleTree.pathToRootAtSnapshot(leafIndex, entries.size());
-                    return MerkleTreeVerification.isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex).getBytes());
+                    return MerkleTreeVerification.isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex));
                 });
     }
 
