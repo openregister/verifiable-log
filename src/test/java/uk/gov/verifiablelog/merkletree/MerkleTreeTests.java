@@ -179,11 +179,7 @@ public class MerkleTreeTests {
     }
 
     private MerkleTree sha256MerkleTree(BiFunction<Integer, Integer, Iterator<byte[]>> leafAccessFunction, Supplier<Integer> leafSizeFunction) {
-        try {
-            return new MerkleTree(MessageDigest.getInstance("SHA-256"), leafAccessFunction, leafSizeFunction);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("can't happen"); // can't happen, SHA-256 is guaranteed
-        }
+        return new MerkleTree(Util.sha256Instance(), leafAccessFunction, leafSizeFunction);
     }
 
     private List<String> bytesToString(List<byte[]> listOfByteArrays) {
