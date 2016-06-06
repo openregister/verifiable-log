@@ -17,14 +17,16 @@ public class Util {
     }
 
     static byte[] branchHash(byte[] left, byte[] right, MessageDigest digest) {
-        digest.update(new byte[]{0x01});
+        digest.update((byte) 0x01);
         digest.update(left);
-        return digest.digest(right);
+        digest.update(right);
+        return digest.digest();
     }
 
     static byte[] leafHash(byte[] leafData, MessageDigest digest) {
-        digest.update(new byte[]{0x00});
-        return digest.digest(leafData);
+        digest.update((byte) 0x00);
+        digest.update(leafData);
+        return digest.digest();
     }
 
     static MessageDigest sha256Instance() {
