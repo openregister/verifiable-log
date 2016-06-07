@@ -150,7 +150,7 @@ public class MerkleTreeTests {
 
     @Test
     public void property_canVerifyConsistencyProof() {
-        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000), integers().between(1,1), integers().between(2,2))
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000), integers().between(1,2), integers().between(2,8))
                 .assuming((entries, low, high) -> low <= high && high <= entries.size())
                 .check((entryStrings, low, high) -> {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());

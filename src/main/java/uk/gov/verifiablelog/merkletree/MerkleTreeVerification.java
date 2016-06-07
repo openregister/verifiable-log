@@ -35,7 +35,7 @@ public class MerkleTreeVerification {
 
     public static boolean isValidConsistencyProof(int low, byte[] oldRoot, int high, byte[] newRoot, List<byte[]> consistencyProof) {
         if (low == high) {
-            return Arrays.equals(oldRoot, newRoot);
+            return Arrays.equals(oldRoot, newRoot) && consistencyProof.isEmpty();
         }
         byte[] computedOldRoot = oldRootHashFromConsistencyProof(low, consistencyProof, oldRoot);
         byte[] computedNewRoot = newRootHashFromConsistencyProof(high, consistencyProof, oldRoot);
@@ -43,7 +43,11 @@ public class MerkleTreeVerification {
     }
 
     private static byte[] newRootHashFromConsistencyProof(int high, List<byte[]> consistencyProof, byte[] oldRoot) {
-        return branchHash(oldRoot, consistencyProof.get(0), sha256Instance());
+        byte[] currentHash = oldRoot;
+        for (byte[] node : consistencyProof) {
+            currentHash = branchHash(currentHash, node, sha256Instance());
+        }
+        return currentHash;
     }
 
     private static byte[] oldRootHashFromConsistencyProof(int low, List<byte[]> consistencyProof, byte[] oldRoot) {
