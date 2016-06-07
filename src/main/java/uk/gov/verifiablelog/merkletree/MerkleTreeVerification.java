@@ -9,14 +9,16 @@ import static uk.gov.verifiablelog.merkletree.Util.branchHash;
 import static uk.gov.verifiablelog.merkletree.Util.k;
 
 public class MerkleTreeVerification {
-    static boolean isValidAuditProof(byte[] rootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
+    static boolean isValidAuditProof(byte[] expectedRootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
         byte[] computedRootHash = rootHashFromAuditPath(treeSize, leafIndex, new ArrayList<>(auditPath), leafData, Util.sha256Instance());
-        return Arrays.equals(computedRootHash, rootHash);
+        return Arrays.equals(computedRootHash, expectedRootHash);
     }
 
     private static byte[] rootHashFromAuditPath(int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData, MessageDigest digest) {
         if (treeSize == 1) {
-            assert auditPath.isEmpty();
+            if (!auditPath.isEmpty()) {
+                throw new IllegalStateException("Should have an empty audit path for trees of size 1");
+            }
             return Util.leafHash(leafData, digest);
         }
         int k = k(treeSize);
