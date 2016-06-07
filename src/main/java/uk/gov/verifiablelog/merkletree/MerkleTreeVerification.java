@@ -7,6 +7,7 @@ import java.util.List;
 
 import static uk.gov.verifiablelog.merkletree.Util.branchHash;
 import static uk.gov.verifiablelog.merkletree.Util.k;
+import static uk.gov.verifiablelog.merkletree.Util.sha256Instance;
 
 public class MerkleTreeVerification {
     static boolean isValidAuditProof(byte[] expectedRootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
@@ -32,4 +33,20 @@ public class MerkleTreeVerification {
         }
     }
 
+    public static boolean isValidConsistencyProof(int low, byte[] oldRoot, int high, byte[] newRoot, List<byte[]> consistencyProof) {
+        if (low == high) {
+            return Arrays.equals(oldRoot, newRoot);
+        }
+        byte[] computedOldRoot = oldRootHashFromConsistencyProof(low, consistencyProof, oldRoot);
+        byte[] computedNewRoot = newRootHashFromConsistencyProof(high, consistencyProof, oldRoot);
+        return Arrays.equals(oldRoot, computedOldRoot) && Arrays.equals(newRoot, computedNewRoot);
+    }
+
+    private static byte[] newRootHashFromConsistencyProof(int high, List<byte[]> consistencyProof, byte[] oldRoot) {
+        return branchHash(oldRoot, consistencyProof.get(0), sha256Instance());
+    }
+
+    private static byte[] oldRootHashFromConsistencyProof(int low, List<byte[]> consistencyProof, byte[] oldRoot) {
+        return oldRoot;
+    }
 }
