@@ -140,17 +140,17 @@ public class MerkleTreeTests {
     public void property_canConstructRootHashFromLeafAndAuditPath() throws Exception {
         qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(1,1000), integers().between(0,999))
                 .assuming((entries, leafIndex) -> leafIndex < entries.size())
-                .check((entryStrings, leafIndex) -> {
+                .checkAssert((entryStrings, leafIndex) -> {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
                     MerkleTree merkleTree = makeMerkleTree(entries);
                     List<byte[]> auditPath = merkleTree.pathToRootAtSnapshot(leafIndex, entries.size());
-                    return MerkleTreeVerification.isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex));
+                    assertThat(MerkleTreeVerification.isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex)), is(true));
                 });
     }
 
     @Test
     public void property_canVerifyConsistencyProof() {
-        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000), integers().between(1,2), integers().between(2,8))
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000), integers().between(1,1000), integers().between(1,1000))
                 .assuming((entries, low, high) -> low <= high && high <= entries.size())
                 .check((entryStrings, low, high) -> {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());

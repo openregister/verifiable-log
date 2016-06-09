@@ -7,7 +7,6 @@ import java.util.List;
 
 import static uk.gov.verifiablelog.merkletree.Util.branchHash;
 import static uk.gov.verifiablelog.merkletree.Util.k;
-import static uk.gov.verifiablelog.merkletree.Util.sha256Instance;
 
 public class MerkleTreeVerification {
     static boolean isValidAuditProof(byte[] expectedRootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
@@ -37,20 +36,41 @@ public class MerkleTreeVerification {
         if (low == high) {
             return Arrays.equals(oldRoot, newRoot) && consistencyProof.isEmpty();
         }
-        byte[] computedOldRoot = oldRootHashFromConsistencyProof(low, consistencyProof, oldRoot);
-        byte[] computedNewRoot = newRootHashFromConsistencyProof(high, consistencyProof, oldRoot);
+        byte[] computedOldRoot = oldRootHashFromConsistencyProof(low, high, new ArrayList<>(consistencyProof), oldRoot);
+        byte[] computedNewRoot = rootHashFromConsistencyProof(low, high, new ArrayList<>(consistencyProof), oldRoot);
         return Arrays.equals(oldRoot, computedOldRoot) && Arrays.equals(newRoot, computedNewRoot);
     }
 
-    private static byte[] newRootHashFromConsistencyProof(int high, List<byte[]> consistencyProof, byte[] oldRoot) {
-        byte[] currentHash = oldRoot;
-        for (byte[] node : consistencyProof) {
-            currentHash = branchHash(currentHash, node, sha256Instance());
-        }
-        return currentHash;
+    private static byte[] rootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot) {
+        return rootHashFromConsistencyProof(0, high, low, consistencyProof, oldRoot, Util.sha256Instance(), true);
     }
 
-    private static byte[] oldRootHashFromConsistencyProof(int low, List<byte[]> consistencyProof, byte[] oldRoot) {
-        return oldRoot;
+    private static byte[] oldRootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot) {
+        return rootHashFromConsistencyProof(0, high, low, consistencyProof, oldRoot, Util.sha256Instance(), false);
+    }
+
+    private static byte[] rootHashFromConsistencyProof(int start, int end, int m, List<byte[]> consistencyProof, byte[] oldRoot, MessageDigest digest, boolean computeNewRoot) {
+        int size = end - start;
+        if (m == size) {
+            if (start == 0) {
+                // this is the b == true case in RFC 6962
+                return oldRoot;
+            }
+            return consistencyProof.remove(consistencyProof.size() - 1);
+        }
+        int k = Util.k(size);
+        int mid = start + k;
+        byte[] nextHash = consistencyProof.remove(consistencyProof.size() - 1);
+        if (m <= k) {
+            byte[] leftChild = rootHashFromConsistencyProof(start, mid, m, consistencyProof, oldRoot, digest, computeNewRoot);
+            if (computeNewRoot) {
+                return Util.branchHash(leftChild, nextHash, digest);
+            } else {
+                return leftChild;
+            }
+        } else {
+            byte[] rightChild = rootHashFromConsistencyProof(mid, end, m - k, consistencyProof, oldRoot, digest, computeNewRoot);
+            return Util.branchHash(nextHash, rightChild, digest);
+        }
     }
 }
