@@ -7,16 +7,19 @@ import java.util.List;
 
 import static uk.gov.verifiablelog.merkletree.Util.branchHash;
 import static uk.gov.verifiablelog.merkletree.Util.k;
+import static uk.gov.verifiablelog.merkletree.Util.sha256Instance;
 
 public class MerkleTreeVerification {
-    static boolean isValidAuditProof(byte[] rootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
+    static boolean isValidAuditProof(byte[] expectedRootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
         byte[] computedRootHash = rootHashFromAuditPath(treeSize, leafIndex, new ArrayList<>(auditPath), leafData, Util.sha256Instance());
-        return Arrays.equals(computedRootHash, rootHash);
+        return Arrays.equals(computedRootHash, expectedRootHash);
     }
 
     private static byte[] rootHashFromAuditPath(int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData, MessageDigest digest) {
         if (treeSize == 1) {
-            assert auditPath.isEmpty();
+            if (!auditPath.isEmpty()) {
+                throw new IllegalStateException("Should have an empty audit path for trees of size 1");
+            }
             return Util.leafHash(leafData, digest);
         }
         int k = k(treeSize);
@@ -30,4 +33,24 @@ public class MerkleTreeVerification {
         }
     }
 
+    public static boolean isValidConsistencyProof(int low, byte[] oldRoot, int high, byte[] newRoot, List<byte[]> consistencyProof) {
+        if (low == high) {
+            return Arrays.equals(oldRoot, newRoot) && consistencyProof.isEmpty();
+        }
+        byte[] computedOldRoot = oldRootHashFromConsistencyProof(low, consistencyProof, oldRoot);
+        byte[] computedNewRoot = newRootHashFromConsistencyProof(high, consistencyProof, oldRoot);
+        return Arrays.equals(oldRoot, computedOldRoot) && Arrays.equals(newRoot, computedNewRoot);
+    }
+
+    private static byte[] newRootHashFromConsistencyProof(int high, List<byte[]> consistencyProof, byte[] oldRoot) {
+        byte[] currentHash = oldRoot;
+        for (byte[] node : consistencyProof) {
+            currentHash = branchHash(currentHash, node, sha256Instance());
+        }
+        return currentHash;
+    }
+
+    private static byte[] oldRootHashFromConsistencyProof(int low, List<byte[]> consistencyProof, byte[] oldRoot) {
+        return oldRoot;
+    }
 }

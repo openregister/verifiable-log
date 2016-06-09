@@ -28,6 +28,10 @@ public class MerkleTree {
     }
 
     public List<byte[]> snapshotConsistency(int snapshot1, int snapshot2) {
+        if (snapshot1 <= 0) {
+            // RFC 6962 §2.1.2 assumes `0 < m < n`; we assume `0 < m <= n`
+            throw new IllegalArgumentException("snapshot1 must be strictly positive");
+        }
         return subtreeSnapshotConsistency(0, snapshot2, snapshot1);
     }
 
