@@ -42,34 +42,32 @@ public class MerkleTreeVerification {
     }
 
     private static byte[] rootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot) {
-        return rootHashFromConsistencyProof(0, high, low, consistencyProof, oldRoot, Util.sha256Instance(), true);
+        return rootHashFromConsistencyProof(low, high, consistencyProof, oldRoot, Util.sha256Instance(), true, true);
     }
 
     private static byte[] oldRootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot) {
-        return rootHashFromConsistencyProof(0, high, low, consistencyProof, oldRoot, Util.sha256Instance(), false);
+        return rootHashFromConsistencyProof(low, high, consistencyProof, oldRoot, Util.sha256Instance(), false, true);
     }
 
-    private static byte[] rootHashFromConsistencyProof(int start, int end, int m, List<byte[]> consistencyProof, byte[] oldRoot, MessageDigest digest, boolean computeNewRoot) {
-        int size = end - start;
-        if (m == size) {
-            if (start == 0) {
+    private static byte[] rootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot, MessageDigest digest, boolean computeNewRoot, boolean startFromOldRoot) {
+        if (low == high) {
+            if (startFromOldRoot) {
                 // this is the b == true case in RFC 6962
                 return oldRoot;
             }
             return consistencyProof.remove(consistencyProof.size() - 1);
         }
-        int k = Util.k(size);
-        int mid = start + k;
+        int k = Util.k(high);
         byte[] nextHash = consistencyProof.remove(consistencyProof.size() - 1);
-        if (m <= k) {
-            byte[] leftChild = rootHashFromConsistencyProof(start, mid, m, consistencyProof, oldRoot, digest, computeNewRoot);
+        if (low <= k) {
+            byte[] leftChild = rootHashFromConsistencyProof(low, k, consistencyProof, oldRoot, digest, computeNewRoot, startFromOldRoot);
             if (computeNewRoot) {
                 return Util.branchHash(leftChild, nextHash, digest);
             } else {
                 return leftChild;
             }
         } else {
-            byte[] rightChild = rootHashFromConsistencyProof(mid, end, m - k, consistencyProof, oldRoot, digest, computeNewRoot);
+            byte[] rightChild = rootHashFromConsistencyProof(low - k, high - k, consistencyProof, oldRoot, digest, computeNewRoot, false);
             return Util.branchHash(nextHash, rightChild, digest);
         }
     }
