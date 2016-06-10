@@ -2,20 +2,20 @@ package uk.gov.verifiablelog.merkletree;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.quicktheories.quicktheories.core.Source;
 
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.BiFunction;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertTrue;
 import static org.quicktheories.quicktheories.QuickTheory.qt;
 import static org.quicktheories.quicktheories.generators.SourceDSL.*;
 
@@ -38,7 +38,7 @@ public class MerkleTreeTests {
     @Before
     public void setup() throws NoSuchAlgorithmException {
         leafValues = new ArrayList<>();
-        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), i -> leafValues.get(i), () -> leafValues.size());
+        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), (i, j) -> leafValues.subList(i, j).iterator(), () -> leafValues.size());
     }
 
     @Test
@@ -137,41 +137,36 @@ public class MerkleTreeTests {
     }
 
     @Test
-    public void property_merkleTreeHashIs32Bytes() throws Exception {
-        Source<String> source = strings().allPossible().ofLengthBetween(0,50);
-        qt().forAll(lists().allListsOf(source).ofSizeBetween(0,50))
-                .check(entries -> {
-                    MerkleTree merkleTree = sha256MerkleTree(i -> entries.get(i).getBytes(), entries::size);
-                    return merkleTree.currentRoot().length == 32;
+    public void property_canConstructRootHashFromLeafAndAuditPath() throws Exception {
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(1,1000), integers().between(0,999))
+                .assuming((entries, leafIndex) -> leafIndex < entries.size())
+                .checkAssert((entryStrings, leafIndex) -> {
+                    List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
+                    MerkleTree merkleTree = makeMerkleTree(entries);
+                    List<byte[]> auditPath = merkleTree.pathToRootAtSnapshot(leafIndex, entries.size());
+                    assertThat(MerkleTreeVerification.isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex)), is(true));
                 });
-    }
-
-    private int treeHeightForSize(int size) {
-        int height = 0;
-        size--;
-        while (size != 0) {
-            size >>= 1;
-            height++;
-        }
-        return height+1;
     }
 
     @Test
-    public void property_auditPathLengthForIndex0IsTreeHeightMinusOne() throws Exception {
-        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000))
-                .check(entries -> {
-                    MerkleTree merkleTree = sha256MerkleTree(i -> entries.get(i).getBytes(), entries::size);
-                    List<byte[]> auditPath = merkleTree.pathToRootAtSnapshot(0, entries.size());
-                    return auditPath.size() == treeHeightForSize(entries.size()) - 1;
-                });
+    public void property_canVerifyConsistencyProof() {
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000), integers().between(1,1000), integers().between(1,1000))
+                .assuming((entries, low, high) -> low <= high && high <= entries.size())
+                .check((entryStrings, low, high) -> {
+                    List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
+                    MerkleTree merkleTree = makeMerkleTree(entries);
+                    byte[] lowRoot = makeMerkleTree(entries.subList(0, low)).currentRoot();
+                    byte[] highRoot = makeMerkleTree(entries.subList(0, high)).currentRoot();
+                    List<byte[]> consistencyProof = merkleTree.snapshotConsistency(low, high);
+
+                    return MerkleTreeVerification.isValidConsistencyProof(low, lowRoot, high, highRoot, consistencyProof);
+                }
+        );
     }
 
-    private MerkleTree sha256MerkleTree(Function<Integer, byte[]> leafAccessFunction, Supplier<Integer> leafSizeFunction) {
-        try {
-            return new MerkleTree(MessageDigest.getInstance("SHA-256"), leafAccessFunction, leafSizeFunction);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("can't happen"); // can't happen, SHA-256 is guaranteed
-        }
+    private MerkleTree makeMerkleTree(List<byte[]> entries) {
+        BiFunction<Integer, Integer, Iterator<byte[]>> leafAccessFunction = (i, j) -> entries.subList(i, j).stream().iterator();
+        return new MerkleTree(Util.sha256Instance(), leafAccessFunction, entries::size);
     }
 
     private List<String> bytesToString(List<byte[]> listOfByteArrays) {
