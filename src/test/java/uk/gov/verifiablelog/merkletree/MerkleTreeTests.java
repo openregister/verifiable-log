@@ -8,14 +8,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertTrue;
 import static org.quicktheories.quicktheories.QuickTheory.qt;
 import static org.quicktheories.quicktheories.generators.SourceDSL.*;
 
@@ -38,7 +36,7 @@ public class MerkleTreeTests {
     @Before
     public void setup() throws NoSuchAlgorithmException {
         leafValues = new ArrayList<>();
-        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), (i, j) -> leafValues.subList(i, j).iterator(), () -> leafValues.size());
+        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), leafValues::get, leafValues::size);
     }
 
     @Test
@@ -75,7 +73,7 @@ public class MerkleTreeTests {
     }
 
     @Test
-    public void expectedAuditPathForSnapshotSize() {
+    public void expectedAuditPathForSnapshotSize() throws NoSuchAlgorithmException {
         for (byte[] testInput : TEST_INPUTS) {
             leafValues.add(testInput);
         }
@@ -110,7 +108,7 @@ public class MerkleTreeTests {
     }
 
     @Test
-    public void expectedConsistencySetForSnapshots() {
+    public void expectedConsistencySetForSnapshots() throws NoSuchAlgorithmException {
         for (byte[] testInput : TEST_INPUTS) {
             leafValues.add(testInput);
         }
@@ -165,7 +163,7 @@ public class MerkleTreeTests {
     }
 
     private MerkleTree makeMerkleTree(List<byte[]> entries) {
-        BiFunction<Integer, Integer, Iterator<byte[]>> leafAccessFunction = (i, j) -> entries.subList(i, j).stream().iterator();
+        Function<Integer, byte[]> leafAccessFunction = entries::get;
         return new MerkleTree(Util.sha256Instance(), leafAccessFunction, entries::size);
     }
 
