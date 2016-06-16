@@ -74,15 +74,15 @@ public class MerkleTree {
     }
 
     // hash of subtree of given size
-    private byte[] subtreeHash(int size, Function<Integer, byte[]> fn) {
+    private byte[] subtreeHash(int size, Function<Integer, byte[]> leafDAOFunction) {
         if (size == 0) {
             return emptyTree();
         } else if (size == 1) {
-            return Util.leafHash(fn.apply(0), messageDigest);
+            return Util.leafHash(leafDAOFunction.apply(0), messageDigest);
         } else {
             int k = Util.k(size);
-            byte[] leftSubtreeHash = subtreeHash(k, fn);
-            byte[] rightSubtreeHash = subtreeHash(size - k, i -> fn.apply(k + i));
+            byte[] leftSubtreeHash = subtreeHash(k, leafDAOFunction);
+            byte[] rightSubtreeHash = subtreeHash(size - k, i -> leafDAOFunction.apply(k + i));
             return Util.branchHash(leftSubtreeHash, rightSubtreeHash, messageDigest);
         }
     }

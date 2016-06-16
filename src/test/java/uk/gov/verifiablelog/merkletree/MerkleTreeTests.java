@@ -40,13 +40,13 @@ public class MerkleTreeTests {
     }
 
     @Test
-    public void expectedRootFromEmptyMerkleTree() throws NoSuchAlgorithmException {
+    public void expectedRootFromEmptyMerkleTree() {
         String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
         assertThat(bytesToString(merkleTree.currentRoot()), is(emptyRootHash));
     }
 
     @Test
-    public void expectedRootFromMerkleTreeWithLeaves() throws NoSuchAlgorithmException {
+    public void expectedRootFromMerkleTreeWithLeaves() {
         leafValues.add(TEST_INPUTS.get(0));
         assertThat(bytesToString(merkleTree.currentRoot()), is("6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"));
 
@@ -73,7 +73,7 @@ public class MerkleTreeTests {
     }
 
     @Test
-    public void expectedAuditPathForSnapshotSize() throws NoSuchAlgorithmException {
+    public void expectedAuditPathForSnapshotSize() {
         for (byte[] testInput : TEST_INPUTS) {
             leafValues.add(testInput);
         }
@@ -108,7 +108,7 @@ public class MerkleTreeTests {
     }
 
     @Test
-    public void expectedConsistencySetForSnapshots() throws NoSuchAlgorithmException {
+    public void expectedConsistencySetForSnapshots() {
         for (byte[] testInput : TEST_INPUTS) {
             leafValues.add(testInput);
         }
