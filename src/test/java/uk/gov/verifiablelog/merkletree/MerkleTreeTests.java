@@ -8,14 +8,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertTrue;
 import static org.quicktheories.quicktheories.QuickTheory.qt;
 import static org.quicktheories.quicktheories.generators.SourceDSL.*;
 
@@ -38,17 +36,17 @@ public class MerkleTreeTests {
     @Before
     public void setup() throws NoSuchAlgorithmException {
         leafValues = new ArrayList<>();
-        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), (i, j) -> leafValues.subList(i, j).iterator(), () -> leafValues.size());
+        merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), leafValues::get, leafValues::size);
     }
 
     @Test
-    public void expectedRootFromEmptyMerkleTree() throws NoSuchAlgorithmException {
+    public void expectedRootFromEmptyMerkleTree() {
         String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
         assertThat(bytesToString(merkleTree.currentRoot()), is(emptyRootHash));
     }
 
     @Test
-    public void expectedRootFromMerkleTreeWithLeaves() throws NoSuchAlgorithmException {
+    public void expectedRootFromMerkleTreeWithLeaves() {
         leafValues.add(TEST_INPUTS.get(0));
         assertThat(bytesToString(merkleTree.currentRoot()), is("6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"));
 
@@ -165,8 +163,7 @@ public class MerkleTreeTests {
     }
 
     private MerkleTree makeMerkleTree(List<byte[]> entries) {
-        BiFunction<Integer, Integer, Iterator<byte[]>> leafAccessFunction = (i, j) -> entries.subList(i, j).stream().iterator();
-        return new MerkleTree(Util.sha256Instance(), leafAccessFunction, entries::size);
+        return new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
     }
 
     private List<String> bytesToString(List<byte[]> listOfByteArrays) {
