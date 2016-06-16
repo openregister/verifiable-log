@@ -163,8 +163,7 @@ public class MerkleTreeTests {
     }
 
     private MerkleTree makeMerkleTree(List<byte[]> entries) {
-        Function<Integer, byte[]> leafAccessFunction = entries::get;
-        return new MerkleTree(Util.sha256Instance(), leafAccessFunction, entries::size);
+        return new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
     }
 
     private List<String> bytesToString(List<byte[]> listOfByteArrays) {
