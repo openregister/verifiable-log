@@ -23,6 +23,12 @@ dependencies {
     testCompile 'org.quicktheories:quicktheories:0.12'
 }
 
+test {
+    afterTest { desc, result ->
+        println "Executing test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+    }
+}
+
 jar.baseName = "verifiable-log"
 
 jar {
