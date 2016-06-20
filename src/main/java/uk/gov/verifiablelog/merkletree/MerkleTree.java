@@ -35,36 +35,36 @@ public class MerkleTree {
         return subtreePathAtSnapshot(leafIndex, 0, snapshotSize);
     }
 
-//    public List<byte[]> snapshotConsistency(int snapshot1, int snapshot2) {
-//        if (snapshot1 <= 0) {
-//            // RFC 6962 §2.1.2 assumes `0 < m < n`; we assume `0 < m <= n`
-//            throw new IllegalArgumentException("snapshot1 must be strictly positive");
-//        }
-//        return subtreeSnapshotConsistency(snapshot1, snapshot2, true, leafDAOFunction);
-//    }
-//
-//    private List<byte[]> subtreeSnapshotConsistency(int low, int high, boolean startFromOldRoot, Function<Integer, byte[]> subtreeDAOFunction) {
-//        if (low == high) {
-//            if (startFromOldRoot) {
-//                // this is the b == true case in RFC 6962
-//                return new ArrayList<>();
-//            }
-//            List<byte[]> consistencySet = new ArrayList<>();
-//            consistencySet.add(realSubtreeHash(high, subtreeDAOFunction));
-//            return consistencySet;
-//        }
-//        int k = Util.k(high);
-//        if (low <= k) {
-//            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low, k, startFromOldRoot, subtreeDAOFunction);
-//            subtreeConsistencySet.add(realSubtreeHash(high - k, i -> subtreeDAOFunction.apply(i + k)));
-//            return subtreeConsistencySet;
-//        } else {
-//            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low - k, high - k, false, i -> subtreeDAOFunction.apply(i + k));
-//            subtreeConsistencySet.add(realSubtreeHash(k, subtreeDAOFunction));
-//            return subtreeConsistencySet;
-//        }
-//    }
-//
+    public List<byte[]> snapshotConsistency(int snapshot1, int snapshot2) {
+        if (snapshot1 <= 0) {
+            // RFC 6962 §2.1.2 assumes `0 < m < n`; we assume `0 < m <= n`
+            throw new IllegalArgumentException("snapshot1 must be strictly positive");
+        }
+        return subtreeSnapshotConsistency(snapshot1, snapshot2, 0, true, leafDAOFunction);
+    }
+
+    private List<byte[]> subtreeSnapshotConsistency(int low, int high, int start, boolean startFromOldRoot, Function<Integer, byte[]> subtreeDAOFunction) {
+        if (low == high) {
+            if (startFromOldRoot) {
+                // this is the b == true case in RFC 6962
+                return new ArrayList<>();
+            }
+            List<byte[]> consistencySet = new ArrayList<>();
+            consistencySet.add(realSubtreeHash(start, high));
+            return consistencySet;
+        }
+        int k = Util.k(high);
+        if (low <= k) {
+            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low, k, start, startFromOldRoot, subtreeDAOFunction);
+            subtreeConsistencySet.add(realSubtreeHash(start + k, high - k));
+            return subtreeConsistencySet;
+        } else {
+            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low - k, high - k, start + k, false, subtreeDAOFunction);
+            subtreeConsistencySet.add(realSubtreeHash(start, k));
+            return subtreeConsistencySet;
+        }
+    }
+
     // audit path within subtree of leaves from start (inclusive) to end (exclusive)
     private List<byte[]> subtreePathAtSnapshot(int leafIndex, int start, int snapshotSize) {
         if (snapshotSize <= 1) {

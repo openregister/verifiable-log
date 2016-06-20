@@ -111,7 +111,7 @@ public class MerkleTreeTests {
             assertThat(bytesToString(sutMerkleTree.currentRoot()), is("5dc9da79a70659a9ad559cb701ded9a2ab9d823aad2f4960cfe370eff4604328"));
         });
     }
-    
+
     @Test
     public void expectedAuditPathForSnapshotSize() {
         thingsToTestTogether.forEach(sut -> {
@@ -151,34 +151,39 @@ public class MerkleTreeTests {
                     "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b")));
         });
     }
-//
-//    @Test
-//    public void expectedConsistencySetForSnapshots() {
-//        for (byte[] testInput : TEST_INPUTS) {
-//            leafValues.add(testInput);
-//        }
-//
-//        List<byte[]> consistencySet1 = merkleTree.snapshotConsistency(1,1);
-//        assertThat(consistencySet1.size(), is(0));
-//
-//        List<byte[]> consistencySet2 = merkleTree.snapshotConsistency(1,8);
-//        assertThat(bytesToString(consistencySet2), is(Arrays.asList(
-//                "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
-//                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
-//                "6b47aaf29ee3c2af9af889bc1fb9254dabd31177f16232dd6aab035ca39bf6e4")));
-//
-//        List<byte[]> consistencySet3 = merkleTree.snapshotConsistency(6,8);
-//        assertThat(bytesToString(consistencySet3), is(Arrays.asList(
-//                "0ebc5d3437fbe2db158b9f126a1d118e308181031d0a949f8dededebc558ef6a",
-//                "ca854ea128ed050b41b35ffc1b87b8eb2bde461e9e3b5596ece6b9d5975a0ae0",
-//                "d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7")));
-//
-//        List<byte[]> consistencySet4 = merkleTree.snapshotConsistency(2,5);
-//        assertThat(bytesToString(consistencySet4), is(Arrays.asList(
-//                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
-//                "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b")));
-//    }
-//
+
+    @Test
+    public void expectedConsistencySetForSnapshots() {
+        thingsToTestTogether.forEach(sut -> {
+            List<byte[]> leafValues = sut.theLeaves;
+            MerkleTree merkleTree = sut.theTree;
+
+            for (byte[] testInput : TEST_INPUTS) {
+                leafValues.add(testInput);
+            }
+
+            List<byte[]> consistencySet1 = merkleTree.snapshotConsistency(1, 1);
+            assertThat(consistencySet1.size(), is(0));
+
+        List<byte[]> consistencySet2 = merkleTree.snapshotConsistency(1,8);
+        assertThat(bytesToString(consistencySet2), is(Arrays.asList(
+                "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
+                "6b47aaf29ee3c2af9af889bc1fb9254dabd31177f16232dd6aab035ca39bf6e4")));
+
+        List<byte[]> consistencySet3 = merkleTree.snapshotConsistency(6,8);
+        assertThat(bytesToString(consistencySet3), is(Arrays.asList(
+                "0ebc5d3437fbe2db158b9f126a1d118e308181031d0a949f8dededebc558ef6a",
+                "ca854ea128ed050b41b35ffc1b87b8eb2bde461e9e3b5596ece6b9d5975a0ae0",
+                "d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7")));
+
+        List<byte[]> consistencySet4 = merkleTree.snapshotConsistency(2,5);
+        assertThat(bytesToString(consistencySet4), is(Arrays.asList(
+                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
+                "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b")));
+        });
+    }
+
     @Test
     public void property_rootHashFromMemoizedTreeIsSameAsRootHashFromNonMemoizedTree() {
         qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(1, 1000))
@@ -212,22 +217,22 @@ public class MerkleTreeTests {
                     assertThat(MerkleTreeVerification.isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex)), is(true));
                 });
     }
-//
-//    @Test
-//    public void property_canVerifyConsistencyProof() {
-//        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000), integers().between(1,1000), integers().between(1,1000))
-//                .assuming((entries, low, high) -> low <= high && high <= entries.size())
-//                .check((entryStrings, low, high) -> {
-//                    List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
-//                    MerkleTree merkleTree = makeMerkleTree(entries);
-//                    byte[] lowRoot = makeMerkleTree(entries.subList(0, low)).currentRoot();
-//                    byte[] highRoot = makeMerkleTree(entries.subList(0, high)).currentRoot();
-//                    List<byte[]> consistencyProof = merkleTree.snapshotConsistency(low, high);
-//
-//                    return MerkleTreeVerification.isValidConsistencyProof(low, lowRoot, high, highRoot, consistencyProof);
-//                }
-//        );
-//    }
+
+    @Test
+    public void property_canVerifyConsistencyProof() {
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000), integers().between(1,1000), integers().between(1,1000))
+                .assuming((entries, low, high) -> low <= high && high <= entries.size())
+                .check((entryStrings, low, high) -> {
+                    List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
+                    MerkleTree merkleTree = makeMerkleTree(entries);
+                    byte[] lowRoot = makeMerkleTree(entries.subList(0, low)).currentRoot();
+                    byte[] highRoot = makeMerkleTree(entries.subList(0, high)).currentRoot();
+                    List<byte[]> consistencyProof = merkleTree.snapshotConsistency(low, high);
+
+                    return MerkleTreeVerification.isValidConsistencyProof(low, lowRoot, high, highRoot, consistencyProof);
+                }
+        );
+    }
 
     private MerkleTree makeMerkleTree(List<byte[]> entries) {
         return new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
