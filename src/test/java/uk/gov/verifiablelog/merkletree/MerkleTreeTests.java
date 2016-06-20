@@ -206,6 +206,32 @@ public class MerkleTreeTests {
     }
 
     @Test
+    public void property_auditPathFromMemoizedTreeIsSameAsAuditPathFromNonMemoizedTree() throws Exception {
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(1, 1000), integers().between(0, 999))
+                .assuming((entries, leafIndex) -> leafIndex < entries.size())
+                .checkAssert((entryStrings, leafIndex) -> {
+                    List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
+
+                    MemoizationStore inMemoryMs = new InMemory();
+                    MerkleTree memoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryMs);
+                    memoizedTree.currentRoot();
+
+                    MemoizationStore inMemoryPowOfTwoMs = new InMemoryPowOfTwo();
+                    MerkleTree memoizedPowOfTwoTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryPowOfTwoMs);
+                    memoizedPowOfTwoTree.currentRoot();
+
+                    MerkleTree nonMemoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
+
+                    List<byte[]> auditPathNonMemoized = nonMemoizedTree.pathToRootAtSnapshot(leafIndex, entries.size());
+                    List<byte[]> auditPathInMemory = memoizedTree.pathToRootAtSnapshot(leafIndex, entries.size());
+                    List<byte[]> auditPathInMemoryPowOfTwo = memoizedPowOfTwoTree.pathToRootAtSnapshot(leafIndex, entries.size());
+
+                    assertThat(bytesToString(auditPathInMemory), is(bytesToString(auditPathNonMemoized)));
+                    assertThat(bytesToString(auditPathInMemory), is(bytesToString(auditPathInMemoryPowOfTwo)));
+                });
+    }
+
+    @Test
     public void property_canVerifyConsistencyProof() {
         qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2, 1000), integers().between(1, 1000), integers().between(1, 1000))
                 .assuming((entries, low, high) -> low <= high && high <= entries.size())
