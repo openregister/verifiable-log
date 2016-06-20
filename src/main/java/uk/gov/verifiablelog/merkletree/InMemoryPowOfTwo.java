@@ -30,7 +30,6 @@ public class InMemoryPowOfTwo implements MemoizationStore {
     @Override
     public byte[] get(Integer start, Integer size) {
         TreeMap<Integer, byte[]> sizeBucket = data.get(size);
-
         return sizeBucket == null ? null : sizeBucket.get(start);
     }
 }

@@ -16,18 +16,6 @@ import static org.hamcrest.core.Is.is;
 import static org.quicktheories.quicktheories.QuickTheory.qt;
 import static org.quicktheories.quicktheories.generators.SourceDSL.*;
 
-class MerkleTreeTestUnit {
-    public MerkleTree merkleTree;
-    public List<byte[]> leaves;
-    public MemoizationStore memoizationStore;
-
-    public MerkleTreeTestUnit(MerkleTree merkleTree, List<byte[]> leaves, MemoizationStore memoizationStore) {
-        this.merkleTree = merkleTree;
-        this.leaves = leaves;
-        this.memoizationStore = memoizationStore;
-    }
-}
-
 public class MerkleTreeTests {
 
     public static final List<byte[]> TEST_INPUTS = Arrays.asList(
@@ -54,12 +42,6 @@ public class MerkleTreeTests {
                 makeMerkleTreeTestUnit(inMemoryPowOfTwo),
                 makeMerkleTreeTestUnit(inMemoryPowOfTwo)
         ));
-    }
-
-    private MerkleTreeTestUnit makeMerkleTreeTestUnit(MemoizationStore memoizationStore) throws NoSuchAlgorithmException {
-        List<byte[]> leafValues = new ArrayList<>();
-        MerkleTree merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), leafValues::get, leafValues::size);
-        return new MerkleTreeTestUnit(merkleTree, leafValues, memoizationStore);
     }
 
     @Test
@@ -179,14 +161,14 @@ public class MerkleTreeTests {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
 
                     MemoizationStore inMemoryMs = new InMemory();
-                    MerkleTree memoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryMs);
+                    MerkleTree memoizedTree = makeMerkleTree(entries, inMemoryMs);
                     memoizedTree.currentRoot();
 
                     MemoizationStore inMemoryPowOfTwoMs = new InMemoryPowOfTwo();
-                    MerkleTree memoizedPowOfTwoTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryPowOfTwoMs);
+                    MerkleTree memoizedPowOfTwoTree = makeMerkleTree(entries, inMemoryPowOfTwoMs);
                     memoizedPowOfTwoTree.currentRoot();
 
-                    MerkleTree nonMemoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
+                    MerkleTree nonMemoizedTree = makeMerkleTree(entries);
 
                     assertThat(bytesToString(memoizedTree.currentRoot()), is(bytesToString(nonMemoizedTree.currentRoot())));
                     assertThat(bytesToString(memoizedPowOfTwoTree.currentRoot()), is(bytesToString(nonMemoizedTree.currentRoot())));
@@ -213,14 +195,14 @@ public class MerkleTreeTests {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
 
                     MemoizationStore inMemoryMs = new InMemory();
-                    MerkleTree memoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryMs);
+                    MerkleTree memoizedTree = makeMerkleTree(entries, inMemoryMs);
                     memoizedTree.currentRoot();
 
                     MemoizationStore inMemoryPowOfTwoMs = new InMemoryPowOfTwo();
-                    MerkleTree memoizedPowOfTwoTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryPowOfTwoMs);
+                    MerkleTree memoizedPowOfTwoTree = makeMerkleTree(entries, inMemoryPowOfTwoMs);
                     memoizedPowOfTwoTree.currentRoot();
 
-                    MerkleTree nonMemoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
+                    MerkleTree nonMemoizedTree = makeMerkleTree(entries);
 
                     List<byte[]> auditPathNonMemoized = nonMemoizedTree.pathToRootAtSnapshot(leafIndex, entries.size());
                     List<byte[]> auditPathInMemory = memoizedTree.pathToRootAtSnapshot(leafIndex, entries.size());
@@ -254,14 +236,14 @@ public class MerkleTreeTests {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
 
                     MemoizationStore inMemoryMs = new InMemory();
-                    MerkleTree memoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryMs);
+                    MerkleTree memoizedTree = makeMerkleTree(entries, inMemoryMs);
                     memoizedTree.currentRoot();
 
                     MemoizationStore inMemoryPowOfTwoMs = new InMemoryPowOfTwo();
-                    MerkleTree memoizedPowOfTwoTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryPowOfTwoMs);
+                    MerkleTree memoizedPowOfTwoTree = makeMerkleTree(entries, inMemoryPowOfTwoMs);
                     memoizedPowOfTwoTree.currentRoot();
 
-                    MerkleTree nonMemoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
+                    MerkleTree nonMemoizedTree = makeMerkleTree(entries);
 
                     List<byte[]> consistencyProofForNonMemoized = nonMemoizedTree.snapshotConsistency(low, high);
                     List<byte[]> consistencyProofForInMemory = memoizedTree.snapshotConsistency(low, high);
@@ -272,8 +254,28 @@ public class MerkleTreeTests {
                 });
     }
 
+
+    class MerkleTreeTestUnit {
+        public MerkleTree merkleTree;
+        public List<byte[]> leaves;
+
+        public MerkleTreeTestUnit(MerkleTree merkleTree, List<byte[]> leaves) {
+            this.merkleTree = merkleTree;
+            this.leaves = leaves;
+        }
+    }
+
     private MerkleTree makeMerkleTree(List<byte[]> entries) {
         return new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
+    }
+
+    private MerkleTree makeMerkleTree(List<byte[]> entries, MemoizationStore memoizationStore) {
+        return new MerkleTree(Util.sha256Instance(), entries::get, entries::size, memoizationStore);
+    }
+
+    private MerkleTreeTestUnit makeMerkleTreeTestUnit(MemoizationStore memoizationStore) throws NoSuchAlgorithmException {
+        List<byte[]> leafValues = new ArrayList<>();
+        return new MerkleTreeTestUnit(makeMerkleTree(leafValues, memoizationStore), leafValues);
     }
 
     private List<String> bytesToString(List<byte[]> listOfByteArrays) {

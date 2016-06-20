@@ -24,7 +24,7 @@ public class MerkleTree {
         this.messageDigest = messageDigest;
         this.leafDAOFunction = leafDAOFunction;
         this.leafSizeDAOFunction = leafSizeDAOFunction;
-        this.memoizationStore = memoizationStore;
+        this.memoizationStore = memoizationStore == null ? new DoNothing(): memoizationStore;
     }
 
     public byte[] currentRoot() {
