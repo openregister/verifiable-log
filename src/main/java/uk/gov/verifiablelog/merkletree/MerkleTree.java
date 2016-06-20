@@ -31,10 +31,10 @@ public class MerkleTree {
         return subtreeHash(0, leafSizeDAOFunction.get());
     }
 
-//    public List<byte[]> pathToRootAtSnapshot(int leafIndex, int snapshotSize) {
-//        return subtreePathAtSnapshot(leafIndex, snapshotSize, leafDAOFunction);
-//    }
-//
+    public List<byte[]> pathToRootAtSnapshot(int leafIndex, int snapshotSize) {
+        return subtreePathAtSnapshot(leafIndex, 0, snapshotSize);
+    }
+
 //    public List<byte[]> snapshotConsistency(int snapshot1, int snapshot2) {
 //        if (snapshot1 <= 0) {
 //            // RFC 6962 §2.1.2 assumes `0 < m < n`; we assume `0 < m <= n`
@@ -65,22 +65,22 @@ public class MerkleTree {
 //        }
 //    }
 //
-//    // audit path within subtree of leaves from start (inclusive) to end (exclusive)
-//    private List<byte[]> subtreePathAtSnapshot(int leafIndex, int snapshotSize, Function<Integer, byte[]> subtreeDAOFunction) {
-//        if (snapshotSize <= 1) {
-//            return new ArrayList<>();
-//        }
-//        int k = Util.k(snapshotSize);
-//        if (leafIndex < k) {
-//            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, k, subtreeDAOFunction);
-//            subtreePath.add(realSubtreeHash(snapshotSize - k, i -> subtreeDAOFunction.apply(k + i)));
-//            return subtreePath;
-//        } else {
-//            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex - k, snapshotSize - k, i -> subtreeDAOFunction.apply(i + k));
-//            subtreePath.add(realSubtreeHash(k, subtreeDAOFunction));
-//            return subtreePath;
-//        }
-//    }
+    // audit path within subtree of leaves from start (inclusive) to end (exclusive)
+    private List<byte[]> subtreePathAtSnapshot(int leafIndex, int start, int snapshotSize) {
+        if (snapshotSize <= 1) {
+            return new ArrayList<>();
+        }
+        int k = Util.k(snapshotSize);
+        if (leafIndex < k) {
+            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, start, k);
+            subtreePath.add(realSubtreeHash(start + k, snapshotSize - k));
+            return subtreePath;
+        } else {
+            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex - k, start + k, snapshotSize - k);
+            subtreePath.add(realSubtreeHash(start, k));
+            return subtreePath;
+        }
+    }
 
     // hash of subtree of given size
     private byte[] realSubtreeHash(int n, int size) {
