@@ -40,10 +40,10 @@ public class MerkleTree {
             // RFC 6962 §2.1.2 assumes `0 < m < n`; we assume `0 < m <= n`
             throw new IllegalArgumentException("snapshot1 must be strictly positive");
         }
-        return subtreeSnapshotConsistency(snapshot1, snapshot2, 0, true, leafDAOFunction);
+        return subtreeSnapshotConsistency(snapshot1, snapshot2, 0, true);
     }
 
-    private List<byte[]> subtreeSnapshotConsistency(int low, int high, int start, boolean startFromOldRoot, Function<Integer, byte[]> subtreeDAOFunction) {
+    private List<byte[]> subtreeSnapshotConsistency(int low, int high, int start, boolean startFromOldRoot) {
         if (low == high) {
             if (startFromOldRoot) {
                 // this is the b == true case in RFC 6962
@@ -55,11 +55,11 @@ public class MerkleTree {
         }
         int k = Util.k(high);
         if (low <= k) {
-            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low, k, start, startFromOldRoot, subtreeDAOFunction);
+            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low, k, start, startFromOldRoot);
             subtreeConsistencySet.add(realSubtreeHash(start + k, high - k));
             return subtreeConsistencySet;
         } else {
-            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low - k, high - k, start + k, false, subtreeDAOFunction);
+            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low - k, high - k, start + k, false);
             subtreeConsistencySet.add(realSubtreeHash(start, k));
             return subtreeConsistencySet;
         }
