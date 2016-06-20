@@ -1,15 +1,14 @@
 package uk.gov.verifiablelog.merkletree;
 
-import org.junit.*;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
 import javax.xml.bind.DatatypeConverter;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -17,23 +16,15 @@ import static org.hamcrest.core.Is.is;
 import static org.quicktheories.quicktheories.QuickTheory.qt;
 import static org.quicktheories.quicktheories.generators.SourceDSL.*;
 
-import java.lang.reflect.Array;
+class MerkleTreeTestUnit {
+    public MerkleTree merkleTree;
+    public List<byte[]> leaves;
+    public MemoizationStore memoizationStore;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-
-class ThingsToTestTogether {
-    public MerkleTree theTree;
-    public List<byte[]> theLeaves;
-    public MemoizationStore theMemo;
-
-    public ThingsToTestTogether(MerkleTree theTree, List<byte[]> theLeaves, MemoizationStore theMemo) {
-        this.theTree = theTree;
-        this.theLeaves = theLeaves;
-        this.theMemo = theMemo;
+    public MerkleTreeTestUnit(MerkleTree merkleTree, List<byte[]> leaves, MemoizationStore memoizationStore) {
+        this.merkleTree = merkleTree;
+        this.leaves = leaves;
+        this.memoizationStore = memoizationStore;
     }
 }
 
@@ -50,41 +41,38 @@ public class MerkleTreeTests {
             new byte[]{0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f});
 
 
-    private ArrayList<ThingsToTestTogether> thingsToTestTogether;
+    private ArrayList<MerkleTreeTestUnit> merkleTreeTestUnits;
 
     @Before
     public void beforeEach() throws NoSuchAlgorithmException {
-        MemoizationStore ms = new InMemory();
-        MemoizationStore ms2 = new InMemoryPowOfTwo();
-        thingsToTestTogether = new ArrayList<>(Arrays.asList(
-                makeThingsToTestTogetherUsing(null),
-                makeThingsToTestTogetherUsing(ms),
-                makeThingsToTestTogetherUsing(ms),
-                makeThingsToTestTogetherUsing(ms2),
-                makeThingsToTestTogetherUsing(ms2)
+        MemoizationStore inMemory = new InMemory();
+        MemoizationStore inMemoryPowOfTwo = new InMemoryPowOfTwo();
+        merkleTreeTestUnits = new ArrayList<>(Arrays.asList(
+                makeMerkleTreeTestUnit(null),
+                makeMerkleTreeTestUnit(inMemory),
+                makeMerkleTreeTestUnit(inMemory),
+                makeMerkleTreeTestUnit(inMemoryPowOfTwo),
+                makeMerkleTreeTestUnit(inMemoryPowOfTwo)
         ));
     }
 
-
-    private ThingsToTestTogether makeThingsToTestTogetherUsing(MemoizationStore memoizationStore) throws NoSuchAlgorithmException {
+    private MerkleTreeTestUnit makeMerkleTreeTestUnit(MemoizationStore memoizationStore) throws NoSuchAlgorithmException {
         List<byte[]> leafValues = new ArrayList<>();
         MerkleTree merkleTree = new MerkleTree(MessageDigest.getInstance("SHA-256"), leafValues::get, leafValues::size);
-        return new ThingsToTestTogether(merkleTree, leafValues, memoizationStore);
+        return new MerkleTreeTestUnit(merkleTree, leafValues, memoizationStore);
     }
-
 
     @Test
     public void expectedRootFromEmptyMerkleTree() {
         String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-        thingsToTestTogether.forEach(sut -> assertThat(bytesToString(sut.theTree.currentRoot()), is(emptyRootHash)));
+        merkleTreeTestUnits.forEach(sut -> assertThat(bytesToString(sut.merkleTree.currentRoot()), is(emptyRootHash)));
     }
-
 
     @Test
     public void expectedRootFromMerkleTreeWithLeavesForTree() {
-        thingsToTestTogether.forEach(sut -> {
-            MerkleTree sutMerkleTree = sut.theTree;
-            List<byte[]> leafValues = sut.theLeaves;
+        merkleTreeTestUnits.forEach(testUnit -> {
+            MerkleTree sutMerkleTree = testUnit.merkleTree;
+            List<byte[]> leafValues = testUnit.leaves;
 
             leafValues.add(TEST_INPUTS.get(0));
             assertThat(bytesToString(sutMerkleTree.currentRoot()), is("6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"));
@@ -114,9 +102,9 @@ public class MerkleTreeTests {
 
     @Test
     public void expectedAuditPathForSnapshotSize() {
-        thingsToTestTogether.forEach(sut -> {
-            List<byte[]> leafValues = sut.theLeaves;
-            MerkleTree merkleTree = sut.theTree;
+        merkleTreeTestUnits.forEach(testUnit -> {
+            List<byte[]> leafValues = testUnit.leaves;
+            MerkleTree merkleTree = testUnit.merkleTree;
 
             for (byte[] testInput : TEST_INPUTS) {
                 leafValues.add(testInput);
@@ -154,9 +142,9 @@ public class MerkleTreeTests {
 
     @Test
     public void expectedConsistencySetForSnapshots() {
-        thingsToTestTogether.forEach(sut -> {
-            List<byte[]> leafValues = sut.theLeaves;
-            MerkleTree merkleTree = sut.theTree;
+        merkleTreeTestUnits.forEach(testUnit -> {
+            List<byte[]> leafValues = testUnit.leaves;
+            MerkleTree merkleTree = testUnit.merkleTree;
 
             for (byte[] testInput : TEST_INPUTS) {
                 leafValues.add(testInput);
@@ -165,22 +153,22 @@ public class MerkleTreeTests {
             List<byte[]> consistencySet1 = merkleTree.snapshotConsistency(1, 1);
             assertThat(consistencySet1.size(), is(0));
 
-        List<byte[]> consistencySet2 = merkleTree.snapshotConsistency(1,8);
-        assertThat(bytesToString(consistencySet2), is(Arrays.asList(
-                "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
-                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
-                "6b47aaf29ee3c2af9af889bc1fb9254dabd31177f16232dd6aab035ca39bf6e4")));
+            List<byte[]> consistencySet2 = merkleTree.snapshotConsistency(1, 8);
+            assertThat(bytesToString(consistencySet2), is(Arrays.asList(
+                    "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+                    "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
+                    "6b47aaf29ee3c2af9af889bc1fb9254dabd31177f16232dd6aab035ca39bf6e4")));
 
-        List<byte[]> consistencySet3 = merkleTree.snapshotConsistency(6,8);
-        assertThat(bytesToString(consistencySet3), is(Arrays.asList(
-                "0ebc5d3437fbe2db158b9f126a1d118e308181031d0a949f8dededebc558ef6a",
-                "ca854ea128ed050b41b35ffc1b87b8eb2bde461e9e3b5596ece6b9d5975a0ae0",
-                "d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7")));
+            List<byte[]> consistencySet3 = merkleTree.snapshotConsistency(6, 8);
+            assertThat(bytesToString(consistencySet3), is(Arrays.asList(
+                    "0ebc5d3437fbe2db158b9f126a1d118e308181031d0a949f8dededebc558ef6a",
+                    "ca854ea128ed050b41b35ffc1b87b8eb2bde461e9e3b5596ece6b9d5975a0ae0",
+                    "d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7")));
 
-        List<byte[]> consistencySet4 = merkleTree.snapshotConsistency(2,5);
-        assertThat(bytesToString(consistencySet4), is(Arrays.asList(
-                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
-                "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b")));
+            List<byte[]> consistencySet4 = merkleTree.snapshotConsistency(2, 5);
+            assertThat(bytesToString(consistencySet4), is(Arrays.asList(
+                    "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
+                    "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b")));
         });
     }
 
@@ -191,24 +179,23 @@ public class MerkleTreeTests {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
 
                     MemoizationStore inMemoryMs = new InMemory();
-                    new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryMs);
+                    MerkleTree memoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryMs);
+                    memoizedTree.currentRoot();
 
                     MemoizationStore inMemoryPowOfTwoMs = new InMemoryPowOfTwo();
-                    new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryPowOfTwoMs);
-
-                    MerkleTree memoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryMs);
                     MerkleTree memoizedPowOfTwoTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryPowOfTwoMs);
+                    memoizedPowOfTwoTree.currentRoot();
+
                     MerkleTree nonMemoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
 
                     assertThat(bytesToString(memoizedTree.currentRoot()), is(bytesToString(nonMemoizedTree.currentRoot())));
                     assertThat(bytesToString(memoizedPowOfTwoTree.currentRoot()), is(bytesToString(nonMemoizedTree.currentRoot())));
-
                 });
     }
 
     @Test
     public void property_canConstructRootHashFromLeafAndAuditPath() throws Exception {
-        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(1,1000), integers().between(0,999))
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(1, 1000), integers().between(0, 999))
                 .assuming((entries, leafIndex) -> leafIndex < entries.size())
                 .checkAssert((entryStrings, leafIndex) -> {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
@@ -220,18 +207,18 @@ public class MerkleTreeTests {
 
     @Test
     public void property_canVerifyConsistencyProof() {
-        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2,1000), integers().between(1,1000), integers().between(1,1000))
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(2, 1000), integers().between(1, 1000), integers().between(1, 1000))
                 .assuming((entries, low, high) -> low <= high && high <= entries.size())
                 .check((entryStrings, low, high) -> {
-                    List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
-                    MerkleTree merkleTree = makeMerkleTree(entries);
-                    byte[] lowRoot = makeMerkleTree(entries.subList(0, low)).currentRoot();
-                    byte[] highRoot = makeMerkleTree(entries.subList(0, high)).currentRoot();
-                    List<byte[]> consistencyProof = merkleTree.snapshotConsistency(low, high);
+                            List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
+                            MerkleTree merkleTree = makeMerkleTree(entries);
+                            byte[] lowRoot = makeMerkleTree(entries.subList(0, low)).currentRoot();
+                            byte[] highRoot = makeMerkleTree(entries.subList(0, high)).currentRoot();
+                            List<byte[]> consistencyProof = merkleTree.snapshotConsistency(low, high);
 
-                    return MerkleTreeVerification.isValidConsistencyProof(low, lowRoot, high, highRoot, consistencyProof);
-                }
-        );
+                            return MerkleTreeVerification.isValidConsistencyProof(low, lowRoot, high, highRoot, consistencyProof);
+                        }
+                );
     }
 
     private MerkleTree makeMerkleTree(List<byte[]> entries) {
