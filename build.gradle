@@ -19,8 +19,7 @@ repositories {
 }
 
 dependencies {
-    testCompile junit
-    testCompile 'org.quicktheories:quicktheories:0.12'
+    testCompile junit, quicktheories, mockito
 }
 
 test {
