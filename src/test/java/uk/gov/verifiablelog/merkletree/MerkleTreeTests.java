@@ -37,10 +37,7 @@ class ThingsToTestTogether {
     }
 }
 
-
-@RunWith(Parameterized.class)
 public class MerkleTreeTests {
-
 
     public static final List<byte[]> TEST_INPUTS = Arrays.asList(
             new byte[]{},
@@ -53,27 +50,21 @@ public class MerkleTreeTests {
             new byte[]{0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f});
 
 
-    private final ThingsToTestTogether thingsToTestTogether;
+    private ArrayList<ThingsToTestTogether> thingsToTestTogether;
 
-    public MerkleTreeTests(ThingsToTestTogether thingsToTestTogether) {
-        this.thingsToTestTogether = thingsToTestTogether;
-    }
-
-    @Parameters(name = "{index}: {0}")
-    public static Object[] data() throws NoSuchAlgorithmException {
+    @Before
+    public void beforeEach() throws NoSuchAlgorithmException {
         MemoizationStore ms = new InMemory();
         MemoizationStore ms2 = new InMemoryPowOfTwo();
-        return new Object[]{
-                makeThingsToTestTogetherUsing(null),
-                makeThingsToTestTogetherUsing(ms),
-                makeThingsToTestTogetherUsing(ms),
-                makeThingsToTestTogetherUsing(ms2),
-                makeThingsToTestTogetherUsing(ms2)
-        };
+        thingsToTestTogether = new ArrayList<>(Arrays.asList(
+                makeThingsToTestTogetherUsing(null)
+//                makeThingsToTestTogetherUsing(ms),
+//                makeThingsToTestTogetherUsing(ms),
+//                makeThingsToTestTogetherUsing(ms2),
+//                makeThingsToTestTogetherUsing(ms2)
+        ));
     }
 
-
-//    private List<ThingsToTestTogether> things;
 
     private static ThingsToTestTogether makeThingsToTestTogetherUsing(MemoizationStore memoizationStore) throws NoSuchAlgorithmException {
         List<byte[]> leafValues = new ArrayList<>();
@@ -81,99 +72,85 @@ public class MerkleTreeTests {
         return new ThingsToTestTogether(merkleTree, leafValues, memoizationStore);
     }
 
-//    @Before
-//    public void beforeEach() throws NoSuchAlgorithmException {
-//        MemoizationStore ms = new InMemory();
-//        MemoizationStore ms2 = new InMemoryPowOfTwo();
-//
-//        things = new ArrayList<>(Arrays.asList(
-//                makeThingsToTestTogetherUsing(null),
-//                makeThingsToTestTogetherUsing(ms),
-//                makeThingsToTestTogetherUsing(ms),
-//                makeThingsToTestTogetherUsing(ms2),
-//                makeThingsToTestTogetherUsing(ms2)));
-//
-//    }
-
-//    @Test
-//    public void expectedRootFromEmptyMerkleTree() {
-//        String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-//        assertThat(bytesToString(merkleTree.currentRoot()), is(emptyRootHash));
-//    }
 
     @Test
     public void expectedRootFromEmptyMerkleTree() {
         String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-        assertThat(bytesToString(thingsToTestTogether.theTree.currentRoot()), is(emptyRootHash));
+        thingsToTestTogether.forEach(sut -> assertThat(bytesToString(sut.theTree.currentRoot()), is(emptyRootHash)));
     }
 
 
     @Test
-    public void test_expectedRootFromMerkleTreeWithLeavesForTree() {
+    public void expectedRootFromMerkleTreeWithLeavesForTree() {
+        thingsToTestTogether.forEach(sut -> {
+            MerkleTree sutMerkleTree = sut.theTree;
+            List<byte[]> leafValues = sut.theLeaves;
 
-        MerkleTree sutMerkleTree = thingsToTestTogether.theTree;
-        List<byte[]> leafValues = thingsToTestTogether.theLeaves;
+            leafValues.add(TEST_INPUTS.get(0));
+            assertThat(bytesToString(sutMerkleTree.currentRoot()), is("6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"));
 
-        leafValues.add(TEST_INPUTS.get(0));
-        assertThat(bytesToString(sutMerkleTree.currentRoot()), is("6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"));
+            leafValues.add(TEST_INPUTS.get(1));
+            assertThat(bytesToString(sutMerkleTree.currentRoot()), is("fac54203e7cc696cf0dfcb42c92a1d9dbaf70ad9e621f4bd8d98662f00e3c125"));
 
-        leafValues.add(TEST_INPUTS.get(1));
-        assertThat(bytesToString(sutMerkleTree.currentRoot()), is("fac54203e7cc696cf0dfcb42c92a1d9dbaf70ad9e621f4bd8d98662f00e3c125"));
+            leafValues.add(TEST_INPUTS.get(2));
+            assertThat(bytesToString(sutMerkleTree.currentRoot()), is("aeb6bcfe274b70a14fb067a5e5578264db0fa9b51af5e0ba159158f329e06e77"));
 
-        leafValues.add(TEST_INPUTS.get(2));
-        assertThat(bytesToString(sutMerkleTree.currentRoot()), is("aeb6bcfe274b70a14fb067a5e5578264db0fa9b51af5e0ba159158f329e06e77"));
+            leafValues.add(TEST_INPUTS.get(3));
+            assertThat(bytesToString(sutMerkleTree.currentRoot()), is("d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7"));
 
-        leafValues.add(TEST_INPUTS.get(3));
-        assertThat(bytesToString(sutMerkleTree.currentRoot()), is("d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7"));
+            leafValues.add(TEST_INPUTS.get(4));
+            assertThat(bytesToString(sutMerkleTree.currentRoot()), is("4e3bbb1f7b478dcfe71fb631631519a3bca12c9aefca1612bfce4c13a86264d4"));
 
-        leafValues.add(TEST_INPUTS.get(4));
-        assertThat(bytesToString(sutMerkleTree.currentRoot()), is("4e3bbb1f7b478dcfe71fb631631519a3bca12c9aefca1612bfce4c13a86264d4"));
+            leafValues.add(TEST_INPUTS.get(5));
+            assertThat(bytesToString(sutMerkleTree.currentRoot()), is("76e67dadbcdf1e10e1b74ddc608abd2f98dfb16fbce75277b5232a127f2087ef"));
 
-        leafValues.add(TEST_INPUTS.get(5));
-        assertThat(bytesToString(sutMerkleTree.currentRoot()), is("76e67dadbcdf1e10e1b74ddc608abd2f98dfb16fbce75277b5232a127f2087ef"));
+            leafValues.add(TEST_INPUTS.get(6));
+            assertThat(bytesToString(sutMerkleTree.currentRoot()), is("ddb89be403809e325750d3d263cd78929c2942b7942a34b77e122c9594a74c8c"));
 
-        leafValues.add(TEST_INPUTS.get(6));
-        assertThat(bytesToString(sutMerkleTree.currentRoot()), is("ddb89be403809e325750d3d263cd78929c2942b7942a34b77e122c9594a74c8c"));
-
-        leafValues.add(TEST_INPUTS.get(7));
-        assertThat(bytesToString(sutMerkleTree.currentRoot()), is("5dc9da79a70659a9ad559cb701ded9a2ab9d823aad2f4960cfe370eff4604328"));
+            leafValues.add(TEST_INPUTS.get(7));
+            assertThat(bytesToString(sutMerkleTree.currentRoot()), is("5dc9da79a70659a9ad559cb701ded9a2ab9d823aad2f4960cfe370eff4604328"));
+        });
     }
 
 
-//
+
 //    @Test
 //    public void expectedAuditPathForSnapshotSize() {
+//        List<byte[]> leafValues = thingsToTestTogether.theLeaves;
+//        MerkleTree merkleTree = thingsToTestTogether.theTree;
+//
+//
 //        for (byte[] testInput : TEST_INPUTS) {
 //            leafValues.add(testInput);
 //        }
 //
 //        List<byte[]> auditPath1 = merkleTree.pathToRootAtSnapshot(0,0);
 //        assertThat(auditPath1.size(), is(0));
-//
-//        List<byte[]> auditPath2 = merkleTree.pathToRootAtSnapshot(0,1);
-//        assertThat(auditPath2.size(), is(0));
-//
-//        List<byte[]> auditPath3 = merkleTree.pathToRootAtSnapshot(0,8);
-//        assertThat(bytesToString(auditPath3), is(Arrays.asList(
-//                "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
-//                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
-//                "6b47aaf29ee3c2af9af889bc1fb9254dabd31177f16232dd6aab035ca39bf6e4")));
-//
-//        List<byte[]> auditPath4 = merkleTree.pathToRootAtSnapshot(5,8);
-//        assertThat(bytesToString(auditPath4), is(Arrays.asList(
-//                "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b",
-//                "ca854ea128ed050b41b35ffc1b87b8eb2bde461e9e3b5596ece6b9d5975a0ae0",
-//                "d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7")));
-//
-//        List<byte[]> auditPath5 = merkleTree.pathToRootAtSnapshot(2,3);
-//        assertThat(bytesToString(auditPath5), is(Arrays.asList(
-//                "fac54203e7cc696cf0dfcb42c92a1d9dbaf70ad9e621f4bd8d98662f00e3c125")));
-//
-//        List<byte[]> auditPath6 = merkleTree.pathToRootAtSnapshot(1,5);
-//        assertThat(bytesToString(auditPath6), is(Arrays.asList(
-//                "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
-//                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
-//                "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b")));
+////
+////        List<byte[]> auditPath2 = merkleTree.pathToRootAtSnapshot(0,1);
+////        assertThat(auditPath2.size(), is(0));
+////
+////        List<byte[]> auditPath3 = merkleTree.pathToRootAtSnapshot(0,8);
+////        assertThat(bytesToString(auditPath3), is(Arrays.asList(
+////                "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+////                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
+////                "6b47aaf29ee3c2af9af889bc1fb9254dabd31177f16232dd6aab035ca39bf6e4")));
+////
+////        List<byte[]> auditPath4 = merkleTree.pathToRootAtSnapshot(5,8);
+////        assertThat(bytesToString(auditPath4), is(Arrays.asList(
+////                "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b",
+////                "ca854ea128ed050b41b35ffc1b87b8eb2bde461e9e3b5596ece6b9d5975a0ae0",
+////                "d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7")));
+////
+////        List<byte[]> auditPath5 = merkleTree.pathToRootAtSnapshot(2,3);
+////        assertThat(bytesToString(auditPath5), is(Arrays.asList(
+////                "fac54203e7cc696cf0dfcb42c92a1d9dbaf70ad9e621f4bd8d98662f00e3c125")));
+////
+////        List<byte[]> auditPath6 = merkleTree.pathToRootAtSnapshot(1,5);
+////        assertThat(bytesToString(auditPath6), is(Arrays.asList(
+////                "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+////                "5f083f0a1a33ca076a95279832580db3e0ef4584bdff1f54c8a360f50de3031e",
+////                "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b")));
 //    }
 //
 //    @Test
@@ -203,20 +180,28 @@ public class MerkleTreeTests {
 //                "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b")));
 //    }
 //
-//    @Test
-//    public void property_rootHashFromMemoizedTreeIsSameAsRootHashFromNonMemoizedTree() {
-//        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(1, 1000))
-//                .checkAssert(entryStrings -> {
-//                    List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
-//
-//
-//                    MerkleTree memoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, new InMemory());
-//                    MerkleTree nonMemoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
-//
-//                    assertThat(bytesToString(memoizedTree.currentRoot()),
-//                            is(bytesToString(nonMemoizedTree.currentRoot())));
-//                });
-//    }
+    @Test
+    public void property_rootHashFromMemoizedTreeIsSameAsRootHashFromNonMemoizedTree() {
+        qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(1, 1000))
+                .checkAssert(entryStrings -> {
+                    List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
+
+                    MemoizationStore inMemoryMs = new InMemory();
+                    new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryMs);
+
+                    MemoizationStore inMemoryPowOfTwoMs = new InMemoryPowOfTwo();
+                    new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryPowOfTwoMs);
+
+
+                    MerkleTree memoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryMs);
+                    MerkleTree memoizedPowOfTwoTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size, inMemoryPowOfTwoMs);
+                    MerkleTree nonMemoizedTree = new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
+
+                    assertThat(bytesToString(memoizedTree.currentRoot()), is(bytesToString(nonMemoizedTree.currentRoot())));
+                    assertThat(bytesToString(memoizedPowOfTwoTree.currentRoot()), is(bytesToString(nonMemoizedTree.currentRoot())));
+                    
+                });
+    }
 //
 //
 //
