@@ -19,8 +19,13 @@ repositories {
 }
 
 dependencies {
-    testCompile junit
-    testCompile 'org.quicktheories:quicktheories:0.12'
+    testCompile junit, quicktheories, mockito
+}
+
+test {
+    afterTest { desc, result ->
+        println "Executing test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+    }
 }
 
 jar.baseName = "verifiable-log"

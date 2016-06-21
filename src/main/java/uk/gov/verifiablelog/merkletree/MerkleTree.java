@@ -11,19 +11,28 @@ public class MerkleTree {
 
     private final Function<Integer, byte[]> leafDAOFunction;
     private final Supplier<Integer> leafSizeDAOFunction;
+    private final MemoizationStore memoizationStore;
 
     public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction) {
         this.messageDigest = messageDigest;
         this.leafDAOFunction = leafDAOFunction;
         this.leafSizeDAOFunction = leafSizeDAOFunction;
+        this.memoizationStore = new DoNothing();
+    }
+
+    public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction, MemoizationStore memoizationStore) {
+        this.messageDigest = messageDigest;
+        this.leafDAOFunction = leafDAOFunction;
+        this.leafSizeDAOFunction = leafSizeDAOFunction;
+        this.memoizationStore = memoizationStore == null ? new DoNothing(): memoizationStore;
     }
 
     public byte[] currentRoot() {
-        return subtreeHash(leafSizeDAOFunction.get(), leafDAOFunction);
+        return subtreeHash(0, leafSizeDAOFunction.get());
     }
 
     public List<byte[]> pathToRootAtSnapshot(int leafIndex, int snapshotSize) {
-        return subtreePathAtSnapshot(leafIndex, snapshotSize, leafDAOFunction);
+        return subtreePathAtSnapshot(leafIndex, 0, snapshotSize);
     }
 
     public List<byte[]> snapshotConsistency(int snapshot1, int snapshot2) {
@@ -31,63 +40,78 @@ public class MerkleTree {
             // RFC 6962 §2.1.2 assumes `0 < m < n`; we assume `0 < m <= n`
             throw new IllegalArgumentException("snapshot1 must be strictly positive");
         }
-        return subtreeSnapshotConsistency(snapshot1, snapshot2, true, leafDAOFunction);
+        return subtreeSnapshotConsistency(snapshot1, snapshot2, 0, true);
     }
 
-    private List<byte[]> subtreeSnapshotConsistency(int low, int high, boolean startFromOldRoot, Function<Integer, byte[]> subtreeDAOFunction) {
+    private List<byte[]> subtreeSnapshotConsistency(int low, int high, int start, boolean startFromOldRoot) {
         if (low == high) {
             if (startFromOldRoot) {
                 // this is the b == true case in RFC 6962
                 return new ArrayList<>();
             }
             List<byte[]> consistencySet = new ArrayList<>();
-            consistencySet.add(subtreeHash(high, subtreeDAOFunction));
+            consistencySet.add(realSubtreeHash(start, high));
             return consistencySet;
         }
         int k = Util.k(high);
         if (low <= k) {
-            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low, k, startFromOldRoot, subtreeDAOFunction);
-            subtreeConsistencySet.add(subtreeHash(high - k, i -> subtreeDAOFunction.apply(i + k)));
+            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low, k, start, startFromOldRoot);
+            subtreeConsistencySet.add(realSubtreeHash(start + k, high - k));
             return subtreeConsistencySet;
         } else {
-            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low - k, high - k, false, i -> subtreeDAOFunction.apply(i + k));
-            subtreeConsistencySet.add(subtreeHash(k, subtreeDAOFunction));
+            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low - k, high - k, start + k, false);
+            subtreeConsistencySet.add(realSubtreeHash(start, k));
             return subtreeConsistencySet;
         }
     }
 
     // audit path within subtree of leaves from start (inclusive) to end (exclusive)
-    private List<byte[]> subtreePathAtSnapshot(int leafIndex, int snapshotSize, Function<Integer, byte[]> subtreeDAOFunction) {
+    private List<byte[]> subtreePathAtSnapshot(int leafIndex, int start, int snapshotSize) {
         if (snapshotSize <= 1) {
             return new ArrayList<>();
         }
         int k = Util.k(snapshotSize);
         if (leafIndex < k) {
-            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, k, subtreeDAOFunction);
-            subtreePath.add(subtreeHash(snapshotSize - k, i -> subtreeDAOFunction.apply(k + i)));
+            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, start, k);
+            subtreePath.add(realSubtreeHash(start + k, snapshotSize - k));
             return subtreePath;
         } else {
-            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex - k, snapshotSize - k, i -> subtreeDAOFunction.apply(i + k));
-            subtreePath.add(subtreeHash(k, subtreeDAOFunction));
+            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex - k, start + k, snapshotSize - k);
+            subtreePath.add(realSubtreeHash(start, k));
             return subtreePath;
         }
     }
 
     // hash of subtree of given size
-    private byte[] subtreeHash(int size, Function<Integer, byte[]> leafDAOFunction) {
+    private byte[] realSubtreeHash(int n, int size) {
         if (size == 0) {
             return emptyTree();
         } else if (size == 1) {
-            return Util.leafHash(leafDAOFunction.apply(0), messageDigest);
+            return Util.leafHash(leafDAOFunction.apply(n), messageDigest);
         } else {
             int k = Util.k(size);
-            byte[] leftSubtreeHash = subtreeHash(k, leafDAOFunction);
-            byte[] rightSubtreeHash = subtreeHash(size - k, i -> leafDAOFunction.apply(k + i));
+            byte[] leftSubtreeHash = subtreeHash(n, k);
+            byte[] rightSubtreeHash = subtreeHash(k + n, size - k);
             return Util.branchHash(leftSubtreeHash, rightSubtreeHash, messageDigest);
         }
+    }
+
+    private byte[] subtreeHash(int n, int size) {
+        byte[] result = memoizationStore.get(n, size);
+
+        if (result != null) {
+            return result;
+        } else {
+            byte[] realResult = realSubtreeHash(n, size);
+            memoizationStore.put(n, size, realResult);
+            return realResult;
+        }
+
     }
 
     private byte[] emptyTree() {
         return messageDigest.digest();
     }
 }
+
+
