@@ -2,12 +2,14 @@ package uk.gov.verifiablelog.merkletree;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
@@ -15,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.quicktheories.quicktheories.QuickTheory.qt;
 import static org.quicktheories.quicktheories.generators.SourceDSL.*;
+import static org.mockito.Mockito.*;
 
 public class MerkleTreeTests {
 
@@ -27,6 +30,8 @@ public class MerkleTreeTests {
             new byte[]{0x40, 0x41, 0x42, 0x43},
             new byte[]{0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57},
             new byte[]{0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f});
+
+    private static final String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
 
     private ArrayList<MerkleTreeTestUnit> merkleTreeTestUnits;
@@ -46,7 +51,6 @@ public class MerkleTreeTests {
 
     @Test
     public void expectedRootFromEmptyMerkleTree() {
-        String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
         merkleTreeTestUnits.forEach(testUnit -> assertThat(bytesToString(testUnit.merkleTree.currentRoot()), is(emptyRootHash)));
     }
 
@@ -255,6 +259,78 @@ public class MerkleTreeTests {
     }
 
 
+    // move this to merkletreememoization store tests??
+    // move property test to a separate file??
+    @Test
+    public void should_useStoreToRetrieveAndSave_for_emptyTreeAndEmptyStore() {
+        MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
+        MerkleTree merkleTree = makeMerkleTree(Collections.emptyList(), storeMock);
+
+        byte[] rootHash = merkleTree.currentRoot();
+
+        verify(storeMock, times(1)).get(0, 0);
+        verify(storeMock, times(1)).put(0, 0, stringToBytes(emptyRootHash));
+        assertThat(bytesToString(rootHash), is(emptyRootHash));
+    }
+
+    @Test
+    public void should_useStoreToRetrieveAndSave_for_treeWithLeaves() {
+        List<byte[]> leafValues = Arrays.asList(
+                stringToBytes("0a"),
+                stringToBytes("0b"),
+                stringToBytes("0c"),
+                stringToBytes("0d")
+        );
+        MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
+        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+
+        byte[] rootHash = merkleTree.currentRoot();
+
+        verify(storeMock, times(7)).get(anyInt(), anyInt());
+        verify(storeMock, times(7)).put(anyInt(), anyInt(), any(byte[].class));
+
+        verifyStoreCalledToGetAndPut(storeMock, 0, 1);
+        verifyStoreCalledToGetAndPut(storeMock, 1, 1);
+        verifyStoreCalledToGetAndPut(storeMock, 2, 1);
+        verifyStoreCalledToGetAndPut(storeMock, 3, 1);
+        verifyStoreCalledToGetAndPut(storeMock, 0, 2);
+
+        verify(storeMock, times(1)).get(0, 4);
+        verify(storeMock, times(1)).put(0, 4, rootHash);
+    }
+
+    @Test
+    public void should_useMemoizationStoreHashes() {
+        List<byte[]> leafValues = Arrays.asList(
+                stringToBytes("0a"),
+                stringToBytes("0b"),
+                stringToBytes("0c"),
+                stringToBytes("0d")
+        );
+        byte[] expectedRootHash = stringToBytes("04");
+
+
+        MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
+        when(storeMock.get(0, 4)).thenReturn(expectedRootHash);
+
+        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+
+        byte[] rootHash = merkleTree.currentRoot();
+
+        verify(storeMock, times(1)).get(anyInt(), anyInt());
+        verify(storeMock, times(1)).get(0, 4);
+        verify(storeMock, never()).put(eq(0), eq(4), any(byte[].class));
+
+        assertThat(bytesToString(rootHash), is(bytesToString(expectedRootHash)));
+
+    }
+
+    private void verifyStoreCalledToGetAndPut(MemoizationStore storeMock, Integer start, Integer size){
+        verify(storeMock, times(1)).get(eq(start), eq(size));
+        verify(storeMock, times(1)).put(eq(start), eq(size), any(byte[].class));
+    }
+
+
     class MerkleTreeTestUnit {
         public MerkleTree merkleTree;
         public List<byte[]> leaves;
@@ -273,7 +349,7 @@ public class MerkleTreeTests {
         return new MerkleTree(Util.sha256Instance(), entries::get, entries::size, memoizationStore);
     }
 
-    private MerkleTreeTestUnit makeMerkleTreeTestUnit(MemoizationStore memoizationStore) throws NoSuchAlgorithmException {
+    private MerkleTreeTestUnit makeMerkleTreeTestUnit(MemoizationStore memoizationStore) {
         List<byte[]> leafValues = new ArrayList<>();
         return new MerkleTreeTestUnit(makeMerkleTree(leafValues, memoizationStore), leafValues);
     }
@@ -285,5 +361,13 @@ public class MerkleTreeTests {
     private String bytesToString(byte[] bytes) {
         return DatatypeConverter.printHexBinary(bytes).toLowerCase();
     }
+
+
+    public static byte[] stringToBytes(String input) {
+        return DatatypeConverter.parseHexBinary(input);
+    }
+
+
+
 }
 
