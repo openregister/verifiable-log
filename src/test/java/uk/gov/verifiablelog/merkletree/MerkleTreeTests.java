@@ -294,6 +294,7 @@ public class MerkleTreeTests {
         verifyStoreCalledToGetAndPut(storeMock, 2, 1);
         verifyStoreCalledToGetAndPut(storeMock, 3, 1);
         verifyStoreCalledToGetAndPut(storeMock, 0, 2);
+        verifyStoreCalledToGetAndPut(storeMock, 2, 2);
 
         verify(storeMock, times(1)).get(0, 4);
         verify(storeMock, times(1)).put(0, 4, rootHash);
@@ -319,7 +320,8 @@ public class MerkleTreeTests {
 
         verify(storeMock, times(1)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(0, 4);
-        verify(storeMock, never()).put(eq(0), eq(4), any(byte[].class));
+
+        verify(storeMock, never()).put(anyInt(), anyInt(), any(byte[].class));
 
         assertThat(bytesToString(rootHash), is(bytesToString(expectedRootHash)));
 
