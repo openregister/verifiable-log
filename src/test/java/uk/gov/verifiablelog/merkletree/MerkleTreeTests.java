@@ -192,7 +192,7 @@ public class MerkleTreeTests {
     }
 
     @Test
-    public void property_auditPathFromMemoizedTreeIsSameAsAuditPathFromNonMemoizedTree() throws Exception {
+    public void property_auditPathFromMemoizedTreeIsSameAsAuditPathFromNonMemoizedTree() {
         qt().forAll(lists().allListsOf(strings().numeric()).ofSizeBetween(1, 1000), integers().between(0, 999))
                 .assuming((entries, leafIndex) -> leafIndex < entries.size())
                 .checkAssert((entryStrings, leafIndex) -> {
@@ -259,8 +259,6 @@ public class MerkleTreeTests {
     }
 
 
-    // move this to merkletreememoization store tests??
-    // move property test to a separate file??
     @Test
     public void should_useStoreToRetrieveAndSave_for_emptyTreeAndEmptyStore() {
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
@@ -331,7 +329,6 @@ public class MerkleTreeTests {
         verify(storeMock, times(1)).get(eq(start), eq(size));
         verify(storeMock, times(1)).put(eq(start), eq(size), any(byte[].class));
     }
-
 
     class MerkleTreeTestUnit {
         public MerkleTree merkleTree;
