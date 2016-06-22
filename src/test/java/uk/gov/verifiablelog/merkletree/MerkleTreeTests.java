@@ -8,7 +8,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -30,30 +30,27 @@ public class MerkleTreeTests {
 
     private static final String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
-    private final Function<List<byte[]>, MerkleTree> makeMerkleTreeFn;
+    private final Supplier<MemoizationStore> memoizationStoreSupplier;
 
     private List<byte[]> leafValues;
     private MerkleTree merkleTree;
 
-    public MerkleTreeTests(Function<List<byte[]>, MerkleTree> makeMerkleTreeFn) {
-        this.leafValues = new ArrayList();
-        this.makeMerkleTreeFn = makeMerkleTreeFn;
+    public MerkleTreeTests(Supplier<MemoizationStore> memoizationStoreSupplier) {
+        this.memoizationStoreSupplier = memoizationStoreSupplier;
     }
 
     @Parameters(name = "case: {index}")
-    public static Collection<Function<List<byte[]>, MerkleTree>> data() {
+    public static Collection<Supplier<MemoizationStore>> data() {
         return Arrays.asList(
-                leafValues -> makeMerkleTree(leafValues),
-                leafValues -> makeMerkleTree(leafValues, null),
-                leafValues -> makeMerkleTree(leafValues, new InMemory()),
-                leafValues -> makeMerkleTree(leafValues, new InMemoryPowOfTwo())
+                InMemory::new,
+                InMemoryPowOfTwo::new
         );
     }
 
     @Before
     public void beforeEach() throws NoSuchAlgorithmException {
-        leafValues.clear();
-        merkleTree = makeMerkleTreeFn.apply(leafValues);
+        leafValues = new ArrayList();
+        merkleTree = makeMerkleTree(leafValues, memoizationStoreSupplier.get());
     }
 
     @Test
