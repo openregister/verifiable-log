@@ -9,6 +9,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
@@ -36,10 +37,10 @@ public class MerkleTreeMockTests {
     @Test
     public void currentRoot_should_useStoreToRetrieveAndSave_for_treeWithLeaves() {
         List<byte[]> leafValues = Arrays.asList(
-                stringToBytes("0a"),
-                stringToBytes("0b"),
-                stringToBytes("0c"),
-                stringToBytes("0d")
+                stringToBytes("01"),
+                stringToBytes("11"),
+                stringToBytes("21"),
+                stringToBytes("31")
         );
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
         MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
@@ -63,10 +64,10 @@ public class MerkleTreeMockTests {
     @Test
     public void currentRoot_should_retrieveAndUseMemoizationStoreHashes() {
         List<byte[]> leafValues = Arrays.asList(
-                stringToBytes("0a"),
-                stringToBytes("0b"),
-                stringToBytes("0c"),
-                stringToBytes("0d")
+                stringToBytes("01"),
+                stringToBytes("11"),
+                stringToBytes("21"),
+                stringToBytes("31")
         );
         byte[] expectedRootHash = stringToBytes("04");
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
@@ -81,6 +82,69 @@ public class MerkleTreeMockTests {
         verify(storeMock, never()).put(anyInt(), anyInt(), any(byte[].class));
         assertThat(bytesToString(rootHash), is(bytesToString(expectedRootHash)));
     }
+
+    @Test
+    public void pathToRootAtSnapshot_should_retrieveAndUseMemoizationStoreHashes() {
+        /**
+         *  Tree and memoization expectations for audit proof 4, 8
+         *  M - memoized
+         *  G - memoization get call expected
+         *  P - memoization put call expected
+         *  * - result
+         *
+         *                     08
+         *                  /      \
+         *              /              \
+         *          /                      \
+         *     *04(M,G)                    44
+         *       /  \                    /    \
+         *      /    \                /          \
+         *     /      \            /                \
+         *   02        22         42              *62(G,P)
+         *  /  \      /  \      /    \            /       \
+         * 01  11    21  31    41   *51(M,G)   61(G,P)  71(G,P)
+         *
+         */
+
+        List<byte[]> leafValues = Arrays.asList(
+                stringToBytes("01"),
+                stringToBytes("11"),
+                stringToBytes("21"),
+                stringToBytes("31"),
+                stringToBytes("41"),
+                stringToBytes("51"),
+                stringToBytes("61"),
+                stringToBytes("71")
+        );
+
+        byte[] expectedNodeHash04 = stringToBytes("04");
+        byte[] expectedNodeHash51 = stringToBytes("51");
+
+        MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
+        when(storeMock.get(0, 4)).thenReturn(expectedNodeHash04);
+        when(storeMock.get(5, 1)).thenReturn(expectedNodeHash51);
+
+        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+
+        List<byte[]> pathToRoot = merkleTree.pathToRootAtSnapshot(4, 8);
+
+        verify(storeMock, times(5)).get(anyInt(), anyInt());
+        verify(storeMock, times(1)).get(5, 1);
+        verify(storeMock, times(1)).get(6, 1);
+        verify(storeMock, times(1)).get(7, 1);
+        verify(storeMock, times(1)).get(6, 2);
+        verify(storeMock, times(1)).get(0, 4);
+
+        verify(storeMock, times(3)).put(anyInt(), anyInt(), any(byte[].class));
+        verify(storeMock, times(1)).put(eq(6), eq(1), any(byte[].class));
+        verify(storeMock, times(1)).put(eq(7), eq(1), any(byte[].class));
+        verify(storeMock, times(1)).put(eq(6), eq(1), any(byte[].class));
+
+        assertThat(pathToRoot, hasSize(3));
+        assertThat(pathToRoot.get(0), is(expectedNodeHash51));
+        assertThat(pathToRoot.get(2), is(expectedNodeHash04));
+    }
+
 
     private void verifyStoreCalledToGetAndPut(MemoizationStore storeMock, Integer start, Integer size) {
         verify(storeMock, times(1)).get(eq(start), eq(size));
