@@ -14,10 +14,7 @@ public class MerkleTree {
     private final MemoizationStore memoizationStore;
 
     public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction) {
-        this.messageDigest = messageDigest;
-        this.leafDAOFunction = leafDAOFunction;
-        this.leafSizeDAOFunction = leafSizeDAOFunction;
-        this.memoizationStore = new DoNothing();
+        this(messageDigest, leafDAOFunction, leafSizeDAOFunction, null);
     }
 
     public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction, MemoizationStore memoizationStore) {
