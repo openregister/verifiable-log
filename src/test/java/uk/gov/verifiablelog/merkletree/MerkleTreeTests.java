@@ -42,6 +42,7 @@ public class MerkleTreeTests {
     @Parameters(name = "case: {index}")
     public static Collection<Supplier<MemoizationStore>> data() {
         return Arrays.asList(
+                () -> null,
                 InMemory::new,
                 InMemoryPowOfTwo::new
         );
