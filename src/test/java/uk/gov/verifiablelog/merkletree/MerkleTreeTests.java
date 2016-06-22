@@ -37,14 +37,10 @@ public class MerkleTreeTests {
 
     @Before
     public void beforeEach() throws NoSuchAlgorithmException {
-        MemoizationStore inMemory = new InMemory();
-        MemoizationStore inMemoryPowOfTwo = new InMemoryPowOfTwo();
         merkleTreeTestUnits = new ArrayList<>(Arrays.asList(
                 makeMerkleTreeTestUnit(null),
-                makeMerkleTreeTestUnit(inMemory),
-                makeMerkleTreeTestUnit(inMemory),
-                makeMerkleTreeTestUnit(inMemoryPowOfTwo),
-                makeMerkleTreeTestUnit(inMemoryPowOfTwo)
+                makeMerkleTreeTestUnit(new InMemory()),
+                makeMerkleTreeTestUnit(new InMemoryPowOfTwo())
         ));
     }
 

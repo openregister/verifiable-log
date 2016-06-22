@@ -6,7 +6,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class MerkleTree {
-    
+
     private final MessageDigest messageDigest;
 
     private final Function<Integer, byte[]> leafDAOFunction;
