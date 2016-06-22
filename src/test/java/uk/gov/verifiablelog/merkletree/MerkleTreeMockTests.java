@@ -23,7 +23,7 @@ public class MerkleTreeMockTests {
     private static final String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
     @Test()
-    public void currentRoot_should_useStoreToRetrieveAndSave_for_emptyTreeAndEmptyStore() {
+    public void currentRoot_usesStoreToRetrieveAndSave_for_emptyTreeAndEmptyStore() {
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
         MerkleTree merkleTree = makeMerkleTree(Collections.emptyList(), storeMock);
 
@@ -35,7 +35,7 @@ public class MerkleTreeMockTests {
     }
 
     @Test
-    public void currentRoot_should_useStoreToRetrieveAndSave_for_treeWithLeaves() {
+    public void currentRoot_usesStoreToRetrieveAndSave_for_treeWithLeaves() {
         List<byte[]> leafValues = Arrays.asList(
                 stringToBytes("01"),
                 stringToBytes("11"),
@@ -62,7 +62,7 @@ public class MerkleTreeMockTests {
     }
 
     @Test
-    public void currentRoot_should_retrieveAndUseMemoizationStoreHashes() {
+    public void currentRoot_retrievesAndUsesMemoizationStoreHashes() {
         List<byte[]> leafValues = Arrays.asList(
                 stringToBytes("01"),
                 stringToBytes("11"),
@@ -84,7 +84,7 @@ public class MerkleTreeMockTests {
     }
 
     @Test
-    public void pathToRootAtSnapshot_should_retrieveAndUseMemoizationStoreHashes() {
+    public void pathToRootAtSnapshot_retrievesAndUsesMemoizationStoreHashes() {
         /**
          *  Tree and memoization expectations for audit proof 4, 8
          *  M - memoized
