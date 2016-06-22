@@ -15,7 +15,7 @@ public class InMemoryTests {
     public void should_storeAllHashes() throws Exception {
         MemoizationStore inMemory = new InMemory();
 
-        qt().forAll(strings().numericBetween(10,11), integers().between(0, 20), integers().between(1, 21))
+        qt().forAll(strings().numericBetween(10,99), integers().between(0, 999), integers().between(1, 1000))
                 .assuming((hash, leafIndex, size) -> leafIndex < size)
                 .checkAssert((hash, leafIndex, size) -> {
                     inMemory.put(leafIndex, size, stringToBytes(hash));
