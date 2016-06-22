@@ -14,10 +14,7 @@ public class MerkleTree {
     private final MemoizationStore memoizationStore;
 
     public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction) {
-        this.messageDigest = messageDigest;
-        this.leafDAOFunction = leafDAOFunction;
-        this.leafSizeDAOFunction = leafSizeDAOFunction;
-        this.memoizationStore = new DoNothing();
+        this(messageDigest, leafDAOFunction, leafSizeDAOFunction, null);
     }
 
     public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction, MemoizationStore memoizationStore) {
@@ -50,17 +47,17 @@ public class MerkleTree {
                 return new ArrayList<>();
             }
             List<byte[]> consistencySet = new ArrayList<>();
-            consistencySet.add(realSubtreeHash(start, high));
+            consistencySet.add(subtreeHash(start, high));
             return consistencySet;
         }
         int k = Util.k(high);
         if (low <= k) {
             List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low, k, start, startFromOldRoot);
-            subtreeConsistencySet.add(realSubtreeHash(start + k, high - k));
+            subtreeConsistencySet.add(subtreeHash(start + k, high - k));
             return subtreeConsistencySet;
         } else {
             List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low - k, high - k, start + k, false);
-            subtreeConsistencySet.add(realSubtreeHash(start, k));
+            subtreeConsistencySet.add(subtreeHash(start, k));
             return subtreeConsistencySet;
         }
     }
@@ -73,37 +70,37 @@ public class MerkleTree {
         int k = Util.k(snapshotSize);
         if (leafIndex < k) {
             List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, start, k);
-            subtreePath.add(realSubtreeHash(start + k, snapshotSize - k));
+            subtreePath.add(subtreeHash(start + k, snapshotSize - k));
             return subtreePath;
         } else {
             List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex - k, start + k, snapshotSize - k);
-            subtreePath.add(realSubtreeHash(start, k));
+            subtreePath.add(subtreeHash(start, k));
             return subtreePath;
         }
     }
 
     // hash of subtree of given size
-    private byte[] realSubtreeHash(int n, int size) {
+    private byte[] realSubtreeHash(int start, int size) {
         if (size == 0) {
             return emptyTree();
         } else if (size == 1) {
-            return Util.leafHash(leafDAOFunction.apply(n), messageDigest);
+            return Util.leafHash(leafDAOFunction.apply(start), messageDigest);
         } else {
             int k = Util.k(size);
-            byte[] leftSubtreeHash = subtreeHash(n, k);
-            byte[] rightSubtreeHash = subtreeHash(k + n, size - k);
+            byte[] leftSubtreeHash = subtreeHash(start, k);
+            byte[] rightSubtreeHash = subtreeHash(k + start, size - k);
             return Util.branchHash(leftSubtreeHash, rightSubtreeHash, messageDigest);
         }
     }
 
-    private byte[] subtreeHash(int n, int size) {
-        byte[] result = memoizationStore.get(n, size);
+    private byte[] subtreeHash(int start, int size) {
+        byte[] result = memoizationStore.get(start, size);
 
         if (result != null) {
             return result;
         } else {
-            byte[] realResult = realSubtreeHash(n, size);
-            memoizationStore.put(n, size, realResult);
+            byte[] realResult = realSubtreeHash(start, size);
+            memoizationStore.put(start, size, realResult);
             return realResult;
         }
 
