@@ -50,17 +50,17 @@ public class MerkleTree {
                 return new ArrayList<>();
             }
             List<byte[]> consistencySet = new ArrayList<>();
-            consistencySet.add(realSubtreeHash(start, high));
+            consistencySet.add(subtreeHash(start, high));
             return consistencySet;
         }
         int k = Util.k(high);
         if (low <= k) {
             List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low, k, start, startFromOldRoot);
-            subtreeConsistencySet.add(realSubtreeHash(start + k, high - k));
+            subtreeConsistencySet.add(subtreeHash(start + k, high - k));
             return subtreeConsistencySet;
         } else {
             List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low - k, high - k, start + k, false);
-            subtreeConsistencySet.add(realSubtreeHash(start, k));
+            subtreeConsistencySet.add(subtreeHash(start, k));
             return subtreeConsistencySet;
         }
     }
@@ -73,11 +73,11 @@ public class MerkleTree {
         int k = Util.k(snapshotSize);
         if (leafIndex < k) {
             List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, start, k);
-            subtreePath.add(realSubtreeHash(start + k, snapshotSize - k));
+            subtreePath.add(subtreeHash(start + k, snapshotSize - k));
             return subtreePath;
         } else {
             List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex - k, start + k, snapshotSize - k);
-            subtreePath.add(realSubtreeHash(start, k));
+            subtreePath.add(subtreeHash(start, k));
             return subtreePath;
         }
     }
