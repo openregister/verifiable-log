@@ -86,11 +86,14 @@ public class MerkleTreeMockTests {
     @Test
     public void pathToRootAtSnapshot_retrievesAndUsesMemoizationStoreHashes() {
         /**
-         *  Tree and memoization expectations for audit proof 4, 8
-         *  M - memoized
-         *  G - memoization get call expected
-         *  P - memoization put call expected
-         *  * - result
+         *  Tree and memoization expectations for audit proof target node: 4, 8
+         *
+         *  ==  target node
+         *  M - memoized before the test
+         *  G - get call on MemoizationStore expected
+         *  P - put call on MemoizationStore expected
+         *  * - pathToRootAtSnapshot result node
+         *
          *
          *                     08
          *                  /      \
@@ -103,7 +106,7 @@ public class MerkleTreeMockTests {
          *   02        22         42              *62(G,P)
          *  /  \      /  \      /    \            /       \
          * 01  11    21  31    41   *51(M,G)   61(G,P)  71(G,P)
-         *
+         *                     ==
          */
 
         List<byte[]> leafValues = Arrays.asList(
@@ -144,7 +147,6 @@ public class MerkleTreeMockTests {
         assertThat(pathToRoot.get(0), is(expectedNodeHash51));
         assertThat(pathToRoot.get(2), is(expectedNodeHash04));
     }
-
 
     private void verifyStoreCalledToGetAndPut(MemoizationStore storeMock, Integer start, Integer size) {
         verify(storeMock, times(1)).get(eq(start), eq(size));
