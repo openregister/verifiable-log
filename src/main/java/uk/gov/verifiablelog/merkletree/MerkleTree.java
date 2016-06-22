@@ -6,7 +6,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class MerkleTree {
-
+    
     private final MessageDigest messageDigest;
 
     private final Function<Integer, byte[]> leafDAOFunction;
@@ -83,27 +83,27 @@ public class MerkleTree {
     }
 
     // hash of subtree of given size
-    private byte[] realSubtreeHash(int n, int size) {
+    private byte[] realSubtreeHash(int start, int size) {
         if (size == 0) {
             return emptyTree();
         } else if (size == 1) {
-            return Util.leafHash(leafDAOFunction.apply(n), messageDigest);
+            return Util.leafHash(leafDAOFunction.apply(start), messageDigest);
         } else {
             int k = Util.k(size);
-            byte[] leftSubtreeHash = subtreeHash(n, k);
-            byte[] rightSubtreeHash = subtreeHash(k + n, size - k);
+            byte[] leftSubtreeHash = subtreeHash(start, k);
+            byte[] rightSubtreeHash = subtreeHash(k + start, size - k);
             return Util.branchHash(leftSubtreeHash, rightSubtreeHash, messageDigest);
         }
     }
 
-    private byte[] subtreeHash(int n, int size) {
-        byte[] result = memoizationStore.get(n, size);
+    private byte[] subtreeHash(int start, int size) {
+        byte[] result = memoizationStore.get(start, size);
 
         if (result != null) {
             return result;
         } else {
-            byte[] realResult = realSubtreeHash(n, size);
-            memoizationStore.put(n, size, realResult);
+            byte[] realResult = realSubtreeHash(start, size);
+            memoizationStore.put(start, size, realResult);
             return realResult;
         }
 

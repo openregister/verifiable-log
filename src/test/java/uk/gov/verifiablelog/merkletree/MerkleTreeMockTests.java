@@ -15,9 +15,8 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static uk.gov.verifiablelog.merkletree.TestUtil.bytesToString;
-import static uk.gov.verifiablelog.merkletree.TestUtil.makeMerkleTree;
-import static uk.gov.verifiablelog.merkletree.TestUtil.stringToBytes;
+
+import static uk.gov.verifiablelog.merkletree.TestUtil.*;
 
 public class MerkleTreeMockTests {
     private static final String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
