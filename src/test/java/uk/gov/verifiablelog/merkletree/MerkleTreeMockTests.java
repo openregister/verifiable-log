@@ -148,7 +148,66 @@ public class MerkleTreeMockTests {
         assertThat(pathToRoot.get(2), is(expectedNodeHash04));
     }
 
-    private void verifyStoreCalledToGetAndPut(MemoizationStore storeMock, Integer start, Integer size) {
+    @Test
+    public void snapshotConsistency_retrievesAndUsesMemoizationStoreHashes() {
+        /**
+         *  Tree and memoization expectations for audit proof target node: 4, 8
+         *
+         *  ==  target node
+         *  M - memoized before the test
+         *  G - get call on MemoizationStore expected
+         *  P - put call on MemoizationStore expected
+         *  * - pathToRootAtSnapshot result node
+         *
+         *
+         *                     08
+         *                  /      \
+         *              /              \
+         *          /                      \
+         *        04                      *44(G,P)
+         *       /  \                    /    \
+         *      /    \                /          \
+         *     /      \            /                \
+         *   02        22       42(M,G)            62(M,G)
+         *  /  \      /  \      /    \            /       \
+         * 01  11    21  31    41    51          61       71
+         *               ==
+         */
+
+        List<byte[]> leafValues = Arrays.asList(
+                stringToBytes("01"),
+                stringToBytes("11"),
+                stringToBytes("21"),
+                stringToBytes("31"),
+                stringToBytes("41"),
+                stringToBytes("51"),
+                stringToBytes("61"),
+                stringToBytes("71")
+        );
+
+        byte[] expectedNodeHash42 = stringToBytes("04");
+        byte[] expectedNodeHash62 = stringToBytes("51");
+
+        MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
+        when(storeMock.get(4, 2)).thenReturn(expectedNodeHash42);
+        when(storeMock.get(6, 2)).thenReturn(expectedNodeHash62);
+
+        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+
+        List<byte[]> snapshotConsistency = merkleTree.snapshotConsistency(4, 8);
+
+        verify(storeMock, times(3)).get(anyInt(), anyInt());
+        verify(storeMock, times(1)).get(4, 4);
+        verify(storeMock, times(1)).get(4, 2);
+        verify(storeMock, times(1)).get(6, 2);
+
+        verify(storeMock, times(1)).put(anyInt(), anyInt(), any(byte[].class));
+        verify(storeMock, times(1)).put(eq(4), eq(4), any(byte[].class));
+
+        assertThat(snapshotConsistency, hasSize(1));
+    }
+
+        private void verifyStoreCalledToGetAndPut(MemoizationStore storeMock, Integer start, Integer size) {
         verify(storeMock, times(1)).get(eq(start), eq(size));
         verify(storeMock, times(1)).put(eq(start), eq(size), any(byte[].class));
     }
