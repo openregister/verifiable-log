@@ -2,30 +2,26 @@ package uk.gov.verifiablelog.merkletree;
 
 import java.security.MessageDigest;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class MerkleTree {
 
     private final MessageDigest messageDigest;
 
-    private final Function<Integer, byte[]> leafDAOFunction;
-    private final Supplier<Integer> leafSizeDAOFunction;
+    private final MerkleLeafDAO merkleLeafDAO;
     private final MemoizationStore memoizationStore;
 
-    public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction) {
-        this(messageDigest, leafDAOFunction, leafSizeDAOFunction, null);
+    public MerkleTree(MessageDigest messageDigest, MerkleLeafDAO merkleLeafDAO) {
+        this(messageDigest, merkleLeafDAO, null);
     }
 
-    public MerkleTree(MessageDigest messageDigest, Function<Integer, byte[]> leafDAOFunction, Supplier<Integer> leafSizeDAOFunction, MemoizationStore memoizationStore) {
+    public MerkleTree(MessageDigest messageDigest, MerkleLeafDAO merkleLeafDAO, MemoizationStore memoizationStore) {
         this.messageDigest = messageDigest;
-        this.leafDAOFunction = leafDAOFunction;
-        this.leafSizeDAOFunction = leafSizeDAOFunction;
+        this.merkleLeafDAO = merkleLeafDAO;
         this.memoizationStore = memoizationStore == null ? new DoNothing(): memoizationStore;
     }
 
     public byte[] currentRoot() {
-        return subtreeHash(0, leafSizeDAOFunction.get());
+        return subtreeHash(0, merkleLeafDAO.totalLeaves());
     }
 
     public List<byte[]> pathToRootAtSnapshot(int leafIndex, int snapshotSize) {
@@ -84,7 +80,7 @@ public class MerkleTree {
         if (size == 0) {
             return emptyTreeHash();
         } else if (size == 1) {
-            return Util.leafHash(leafDAOFunction.apply(start), messageDigest);
+            return Util.leafHash(merkleLeafDAO.getLeafValue(start), messageDigest);
         } else {
             int k = Util.k(size);
             byte[] leftSubtreeHash = subtreeHash(start, k);
