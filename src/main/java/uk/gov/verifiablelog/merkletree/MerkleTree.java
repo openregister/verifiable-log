@@ -80,9 +80,9 @@ public class MerkleTree {
     }
 
     // hash of subtree of given size
-    private byte[] realSubtreeHash(int start, int size) {
+    private byte[] computeSubtreeHash(int start, int size) {
         if (size == 0) {
-            return emptyTree();
+            return emptyTreeHash();
         } else if (size == 1) {
             return Util.leafHash(leafDAOFunction.apply(start), messageDigest);
         } else {
@@ -99,14 +99,14 @@ public class MerkleTree {
         if (result != null) {
             return result;
         } else {
-            byte[] realResult = realSubtreeHash(start, size);
+            byte[] realResult = computeSubtreeHash(start, size);
             memoizationStore.put(start, size, realResult);
             return realResult;
         }
 
     }
 
-    private byte[] emptyTree() {
+    private byte[] emptyTreeHash() {
         return messageDigest.digest();
     }
 }

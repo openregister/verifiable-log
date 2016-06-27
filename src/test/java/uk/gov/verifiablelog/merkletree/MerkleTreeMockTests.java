@@ -86,7 +86,7 @@ public class MerkleTreeMockTests {
     @Test
     public void pathToRootAtSnapshot_retrievesAndUsesMemoizationStoreHashes() {
         /**
-         *  Tree and memoization expectations for audit proof target node: 4, 8
+         *  Tree and memoization expectations for a consistency proof between trees of sizes 4 and 8
          *
          *  ==  target node
          *  M - memoized before the test
