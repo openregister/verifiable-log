@@ -7,11 +7,11 @@ import static java.util.stream.Collectors.toList;
 
 public class TestUtil {
     public static MerkleTree makeMerkleTree(List<byte[]> entries) {
-        return new MerkleTree(Util.sha256Instance(), entries::get, entries::size);
+        return new MerkleTree(Util.sha256Instance(), new ListMerkleLeafDAO(entries));
     }
 
     public static MerkleTree makeMerkleTree(List<byte[]> entries, MemoizationStore memoizationStore) {
-        return new MerkleTree(Util.sha256Instance(), entries::get, entries::size, memoizationStore);
+        return new MerkleTree(Util.sha256Instance(), new ListMerkleLeafDAO(entries), memoizationStore);
     }
 
     public static List<String> bytesToString(List<byte[]> listOfByteArrays) {
@@ -24,5 +24,23 @@ public class TestUtil {
 
     public static byte[] stringToBytes(String input) {
         return DatatypeConverter.parseHexBinary(input);
+    }
+
+    private static class ListMerkleLeafDAO implements  MerkleLeafDAO {
+        private final List<byte[]> leafList;
+
+        public ListMerkleLeafDAO(List<byte[]> leafList) {
+            this.leafList = leafList;
+        }
+
+        @Override
+        public byte[] getLeafValue(int leafIndex) {
+            return leafList.get(leafIndex);
+        }
+
+        @Override
+        public int totalLeaves() {
+            return leafList.size();
+        }
     }
 }
