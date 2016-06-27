@@ -7,7 +7,7 @@ public interface MerkleLeafDAO {
 
     /**
      * Gets a leaf value by its index.
-     * @param leafIndex The zero-based index of the leaf, which must be less than totalLeaves()
+     * @param leafIndex The zero-based index of the leaf, which must be less than {@link #totalLeaves()}
      * @return The raw data for the leaf
      */
     byte[] getLeafValue(int leafIndex);

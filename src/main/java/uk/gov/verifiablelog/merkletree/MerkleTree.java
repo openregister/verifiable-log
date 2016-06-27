@@ -3,40 +3,72 @@ package uk.gov.verifiablelog.merkletree;
 import java.security.MessageDigest;
 import java.util.*;
 
+/**
+ * An implementation of a Verifiable Log.
+ * @see <a href="https://tools.ietf.org/html/rfc6962">RFC 6962</a>
+ */
 public class MerkleTree {
 
     private final MessageDigest messageDigest;
-
     private final MerkleLeafDAO merkleLeafDAO;
     private final MemoizationStore memoizationStore;
 
+    /**
+     * Creates a new instance of a {@link MerkleTree} object that does not memoize Merkle Tree root hashes of
+     * intermediate subtrees.
+     * @param messageDigest The algorithm to use when creating hash values of leaf data and intermediate Merkle Tree nodes
+     * @param merkleLeafDAO An object providing access to the raw leaf data
+     */
     public MerkleTree(MessageDigest messageDigest, MerkleLeafDAO merkleLeafDAO) {
         this(messageDigest, merkleLeafDAO, null);
     }
 
+    /**
+     * Creates a new instance of a {@link MerkleTree} object that memoizes Merkle Tree root hashes of
+     * intermediate subtrees using the a {@link MemoizationStore}.
+     * @param messageDigest The algorithm to use when creating hash values of leaf data and intermediate Merkle Tree nodes
+     * @param merkleLeafDAO An object providing access to the raw leaf data
+     * @param memoizationStore The {@link MemoizationStore} to use when memoizing intermediate subtree root hashes
+     */
     public MerkleTree(MessageDigest messageDigest, MerkleLeafDAO merkleLeafDAO, MemoizationStore memoizationStore) {
         this.messageDigest = messageDigest;
         this.merkleLeafDAO = merkleLeafDAO;
         this.memoizationStore = memoizationStore == null ? new DoNothing(): memoizationStore;
     }
 
+    /**
+     * The root hash of the Verifiable Log created from all current leaf values ordered by index.
+     * @return The Merkle Tree root hash
+     */
     public byte[] currentRoot() {
         return subtreeHash(0, merkleLeafDAO.totalLeaves());
     }
 
-    public List<byte[]> pathToRootAtSnapshot(int leafIndex, int snapshotSize) {
-        return subtreePathAtSnapshot(leafIndex, 0, snapshotSize);
+    /**
+     * The audit proof for the leaf value at a specified index of a Verifiable Log.
+     * @param leafIndex The zero-based index of the leaf for which the audit proof is required
+     * @param treeSize The number of leaves in the Verifiable Log for which the audit proof is required
+     * @return The ordered list of Merkle Tree hashes that provide the audit proof for the specified leaf
+     */
+    public List<byte[]> auditProof(int leafIndex, int treeSize) {
+        return subtreeAuditProof(leafIndex, 0, treeSize);
     }
 
-    public List<byte[]> snapshotConsistency(int snapshot1, int snapshot2) {
-        if (snapshot1 <= 0) {
+    /**
+     * The consistency proof of a Verifiable Log at two tree sizes.
+     * @param treeSize1 The number of leaves in the smaller Verifiable Log
+     * @param treeSize2 The number of leaves in the larger Verifiable Log
+     * @return The ordered list of Merkle Tree hashes that provide the consistency proof between the specified tree sizes
+     */
+    public List<byte[]> consistencyProof(int treeSize1, int treeSize2) {
+        if (treeSize1 <= 0) {
             // RFC 6962 §2.1.2 assumes `0 < m < n`; we assume `0 < m <= n`
-            throw new IllegalArgumentException("snapshot1 must be strictly positive");
+            throw new IllegalArgumentException("treeSize1 must be strictly positive");
         }
-        return subtreeSnapshotConsistency(snapshot1, snapshot2, 0, true);
+        return subtreeConsistencyProof(treeSize1, treeSize2, 0, true);
     }
 
-    private List<byte[]> subtreeSnapshotConsistency(int low, int high, int start, boolean startFromOldRoot) {
+    private List<byte[]> subtreeConsistencyProof(int low, int high, int start, boolean startFromOldRoot) {
         if (low == high) {
             if (startFromOldRoot) {
                 // this is the b == true case in RFC 6962
@@ -48,28 +80,28 @@ public class MerkleTree {
         }
         int k = Util.k(high);
         if (low <= k) {
-            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low, k, start, startFromOldRoot);
+            List<byte[]> subtreeConsistencySet = subtreeConsistencyProof(low, k, start, startFromOldRoot);
             subtreeConsistencySet.add(subtreeHash(start + k, high - k));
             return subtreeConsistencySet;
         } else {
-            List<byte[]> subtreeConsistencySet = subtreeSnapshotConsistency(low - k, high - k, start + k, false);
+            List<byte[]> subtreeConsistencySet = subtreeConsistencyProof(low - k, high - k, start + k, false);
             subtreeConsistencySet.add(subtreeHash(start, k));
             return subtreeConsistencySet;
         }
     }
 
     // audit path within subtree of leaves from start (inclusive) to end (exclusive)
-    private List<byte[]> subtreePathAtSnapshot(int leafIndex, int start, int snapshotSize) {
+    private List<byte[]> subtreeAuditProof(int leafIndex, int start, int snapshotSize) {
         if (snapshotSize <= 1) {
             return new ArrayList<>();
         }
         int k = Util.k(snapshotSize);
         if (leafIndex < k) {
-            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex, start, k);
+            List<byte[]> subtreePath = subtreeAuditProof(leafIndex, start, k);
             subtreePath.add(subtreeHash(start + k, snapshotSize - k));
             return subtreePath;
         } else {
-            List<byte[]> subtreePath = subtreePathAtSnapshot(leafIndex - k, start + k, snapshotSize - k);
+            List<byte[]> subtreePath = subtreeAuditProof(leafIndex - k, start + k, snapshotSize - k);
             subtreePath.add(subtreeHash(start, k));
             return subtreePath;
         }

@@ -10,6 +10,9 @@ public class InMemoryPowOfTwo implements MemoizationStore {
 
     private TreeMap<Integer, TreeMap<Integer, byte[]>> data;
 
+    /**
+     * Creates a new instance of an {@link InMemoryPowOfTwo} object.
+     */
     public InMemoryPowOfTwo() {
         data = new TreeMap<>();
     }

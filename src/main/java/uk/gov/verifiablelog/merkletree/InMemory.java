@@ -9,6 +9,9 @@ public class InMemory implements MemoizationStore {
 
     private TreeMap<Integer, TreeMap<Integer, byte[]>> data;
 
+    /**
+     * Creates a new instance of an {@link InMemory} object.
+     */
     public InMemory() {
         data = new TreeMap<>();
     }
