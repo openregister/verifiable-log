@@ -92,7 +92,7 @@ public class MerkleTreeMockTests {
          *  M - memoized before the test
          *  G - get call on MemoizationStore expected
          *  P - put call on MemoizationStore expected
-         *  * - pathToRootAtSnapshot result node
+         *  * - auditProof result node
          *
          *
          *                     08
@@ -129,7 +129,7 @@ public class MerkleTreeMockTests {
 
         MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
 
-        List<byte[]> pathToRoot = merkleTree.pathToRootAtSnapshot(4, 8);
+        List<byte[]> pathToRoot = merkleTree.auditProof(4, 8);
 
         verify(storeMock, times(5)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(5, 1);

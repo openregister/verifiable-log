@@ -8,10 +8,41 @@ import java.util.List;
 import static uk.gov.verifiablelog.merkletree.Util.branchHash;
 import static uk.gov.verifiablelog.merkletree.Util.k;
 
+/**
+ * Verifies proofs provided by a Verifiable Log as implemented by {@link MerkleTree}
+ */
 public class MerkleTreeVerification {
-    static boolean isValidAuditProof(byte[] expectedRootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
+
+    /**
+     * Verifies a piece of leaf data against an audit proof from a Verifiable Log.
+     * @param expectedRootHash The Merkle Tree root hash of the Verifiable Log that computed the audit proof
+     * @param treeSize The number of leaves in the Verifiable Log that computed the audit proof
+     * @param leafIndex The zero-based index of the leaf for which the audit proof was computed
+     * @param auditPath The audit proof to verify against
+     * @param leafData The raw leaf data to verify
+     * @return true if the leaf data can be verified against the audit proof, otherwise false
+     */
+    public static boolean isValidAuditProof(byte[] expectedRootHash, int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData) {
         byte[] computedRootHash = rootHashFromAuditPath(treeSize, leafIndex, new ArrayList<>(auditPath), leafData, Util.sha256Instance());
         return Arrays.equals(computedRootHash, expectedRootHash);
+    }
+
+    /**
+     * Verifies a the consistency of two tree sizes using a consistency proof from a Verifiable Log.
+     * @param treeSize1 The number of leaves in the smaller Verifiable Log
+     * @param oldRoot The Merkle Tree root hash of the smaller Verifiable Log
+     * @param treeSize2 The number of leaves in the larger Verifiable Log
+     * @param newRoot The Merkle Tree root hash of the larger Verifiable Log
+     * @param consistencyProof The consistency proof to verify against
+     * @return true if the root hashes for the two tree sizes can be verified as consistent, otherwise false
+     */
+    public static boolean isValidConsistencyProof(int treeSize1, byte[] oldRoot, int treeSize2, byte[] newRoot, List<byte[]> consistencyProof) {
+        if (treeSize1 == treeSize2) {
+            return Arrays.equals(oldRoot, newRoot) && consistencyProof.isEmpty();
+        }
+        byte[] computedOldRoot = oldRootHashFromConsistencyProof(treeSize1, treeSize2, new ArrayList<>(consistencyProof), oldRoot);
+        byte[] computedNewRoot = newRootHashFromConsistencyProof(treeSize1, treeSize2, new ArrayList<>(consistencyProof), oldRoot);
+        return Arrays.equals(oldRoot, computedOldRoot) && Arrays.equals(newRoot, computedNewRoot);
     }
 
     private static byte[] rootHashFromAuditPath(int treeSize, int leafIndex, List<byte[]> auditPath, byte[] leafData, MessageDigest digest) {
@@ -32,16 +63,7 @@ public class MerkleTreeVerification {
         }
     }
 
-    public static boolean isValidConsistencyProof(int low, byte[] oldRoot, int high, byte[] newRoot, List<byte[]> consistencyProof) {
-        if (low == high) {
-            return Arrays.equals(oldRoot, newRoot) && consistencyProof.isEmpty();
-        }
-        byte[] computedOldRoot = oldRootHashFromConsistencyProof(low, high, new ArrayList<>(consistencyProof), oldRoot);
-        byte[] computedNewRoot = rootHashFromConsistencyProof(low, high, new ArrayList<>(consistencyProof), oldRoot);
-        return Arrays.equals(oldRoot, computedOldRoot) && Arrays.equals(newRoot, computedNewRoot);
-    }
-
-    private static byte[] rootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot) {
+    private static byte[] newRootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot) {
         return rootHashFromConsistencyProof(low, high, consistencyProof, oldRoot, Util.sha256Instance(), true, true);
     }
 

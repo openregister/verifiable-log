@@ -43,7 +43,7 @@ public class MerkleTreePropertyTests {
                 .checkAssert((entryStrings, leafIndex) -> {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
                     MerkleTree merkleTree = makeMerkleTree(entries);
-                    List<byte[]> auditPath = merkleTree.pathToRootAtSnapshot(leafIndex, entries.size());
+                    List<byte[]> auditPath = merkleTree.auditProof(leafIndex, entries.size());
                     assertThat(MerkleTreeVerification.isValidAuditProof(merkleTree.currentRoot(), entries.size(), leafIndex, auditPath, entries.get(leafIndex)), is(true));
                 });
     }
@@ -65,9 +65,9 @@ public class MerkleTreePropertyTests {
 
                     MerkleTree nonMemoizedTree = makeMerkleTree(entries);
 
-                    List<byte[]> auditPathNonMemoized = nonMemoizedTree.pathToRootAtSnapshot(leafIndex, entries.size());
-                    List<byte[]> auditPathInMemory = memoizedTree.pathToRootAtSnapshot(leafIndex, entries.size());
-                    List<byte[]> auditPathInMemoryPowOfTwo = memoizedPowOfTwoTree.pathToRootAtSnapshot(leafIndex, entries.size());
+                    List<byte[]> auditPathNonMemoized = nonMemoizedTree.auditProof(leafIndex, entries.size());
+                    List<byte[]> auditPathInMemory = memoizedTree.auditProof(leafIndex, entries.size());
+                    List<byte[]> auditPathInMemoryPowOfTwo = memoizedPowOfTwoTree.auditProof(leafIndex, entries.size());
 
                     assertThat(bytesToString(auditPathInMemory), is(bytesToString(auditPathNonMemoized)));
                     assertThat(bytesToString(auditPathInMemoryPowOfTwo), is(bytesToString(auditPathNonMemoized)));
@@ -83,7 +83,7 @@ public class MerkleTreePropertyTests {
                     MerkleTree merkleTree = makeMerkleTree(entries);
                     byte[] lowRoot = makeMerkleTree(entries.subList(0, low)).currentRoot();
                     byte[] highRoot = makeMerkleTree(entries.subList(0, high)).currentRoot();
-                    List<byte[]> consistencyProof = merkleTree.snapshotConsistency(low, high);
+                    List<byte[]> consistencyProof = merkleTree.consistencyProof(low, high);
 
                     return MerkleTreeVerification.isValidConsistencyProof(low, lowRoot, high, highRoot, consistencyProof);
                 });
@@ -106,9 +106,9 @@ public class MerkleTreePropertyTests {
 
                     MerkleTree nonMemoizedTree = makeMerkleTree(entries);
 
-                    List<byte[]> consistencyProofForNonMemoized = nonMemoizedTree.snapshotConsistency(low, high);
-                    List<byte[]> consistencyProofForInMemory = memoizedTree.snapshotConsistency(low, high);
-                    List<byte[]> consistencyProofForInMemoryPowOfTwo = memoizedPowOfTwoTree.snapshotConsistency(low, high);
+                    List<byte[]> consistencyProofForNonMemoized = nonMemoizedTree.consistencyProof(low, high);
+                    List<byte[]> consistencyProofForInMemory = memoizedTree.consistencyProof(low, high);
+                    List<byte[]> consistencyProofForInMemoryPowOfTwo = memoizedPowOfTwoTree.consistencyProof(low, high);
 
                     assertThat(bytesToString(consistencyProofForInMemory), is(bytesToString(consistencyProofForNonMemoized)));
                     assertThat(bytesToString(consistencyProofForInMemoryPowOfTwo), is(bytesToString(consistencyProofForNonMemoized)));
