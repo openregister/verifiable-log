@@ -84,9 +84,9 @@ public class MerkleTreeMockTests {
     }
 
     @Test
-    public void pathToRootAtSnapshot_retrievesAndUsesMemoizationStoreHashes() {
+    public void auditProof_retrievesAndUsesMemoizationStoreHashes() {
         /**
-         *  Tree and memoization expectations for a consistency proof between trees of sizes 4 and 8
+         *  Tree and memoization expectations for a audit proof target node: 4, 8
          *
          *  ==  target node
          *  M - memoized before the test
@@ -129,7 +129,7 @@ public class MerkleTreeMockTests {
 
         MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
 
-        List<byte[]> pathToRoot = merkleTree.auditProof(4, 8);
+        List<byte[]> auditProof = merkleTree.auditProof(4, 8);
 
         verify(storeMock, times(5)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(5, 1);
@@ -143,13 +143,13 @@ public class MerkleTreeMockTests {
         verify(storeMock, times(1)).put(eq(7), eq(1), any(byte[].class));
         verify(storeMock, times(1)).put(eq(6), eq(1), any(byte[].class));
 
-        assertThat(pathToRoot, hasSize(3));
-        assertThat(pathToRoot.get(0), is(expectedNodeHash51));
-        assertThat(pathToRoot.get(2), is(expectedNodeHash04));
+        assertThat(auditProof, hasSize(3));
+        assertThat(auditProof.get(0), is(expectedNodeHash51));
+        assertThat(auditProof.get(2), is(expectedNodeHash04));
     }
 
     @Test
-    public void snapshotConsistency_retrievesAndUsesMemoizationStoreHashes() {
+    public void consistencyProof_retrievesAndUsesMemoizationStoreHashes() {
         /**
          *  Tree and memoization expectations for a consistency proof between trees of sizes 4 and 8
          *
@@ -157,7 +157,7 @@ public class MerkleTreeMockTests {
          *  M - memoized before the test
          *  G - get call on MemoizationStore expected
          *  P - put call on MemoizationStore expected
-         *  * - pathToRootAtSnapshot result node
+         *  * - consistencyProof result node
          *
          *
          *                     08
@@ -194,7 +194,7 @@ public class MerkleTreeMockTests {
 
         MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
 
-        List<byte[]> snapshotConsistency = merkleTree.consistencyProof(4, 8);
+        List<byte[]> consistencyProof = merkleTree.consistencyProof(4, 8);
 
         verify(storeMock, times(3)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(4, 4);
@@ -204,7 +204,7 @@ public class MerkleTreeMockTests {
         verify(storeMock, times(1)).put(anyInt(), anyInt(), any(byte[].class));
         verify(storeMock, times(1)).put(eq(4), eq(4), any(byte[].class));
 
-        assertThat(snapshotConsistency, hasSize(1));
+        assertThat(consistencyProof, hasSize(1));
     }
 
         private void verifyStoreCalledToGetAndPut(MemoizationStore storeMock, Integer start, Integer size) {
