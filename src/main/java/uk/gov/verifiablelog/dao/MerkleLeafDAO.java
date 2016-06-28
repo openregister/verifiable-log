@@ -1,4 +1,4 @@
-package uk.gov.verifiablelog.merkletree;
+package uk.gov.verifiablelog.dao;
 
 /**
  * Defines the contract through which a consumer of a {@link MerkleLeafDAO} can query for leaf data.

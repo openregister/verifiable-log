@@ -1,4 +1,8 @@
-package uk.gov.verifiablelog.merkletree;
+package uk.gov.verifiablelog;
+
+import uk.gov.verifiablelog.dao.memoization.MemoizationStore;
+import uk.gov.verifiablelog.dao.MerkleLeafDAO;
+import uk.gov.verifiablelog.merkletree.MerkleUtil;
 
 import javax.xml.bind.DatatypeConverter;
 import java.util.List;
@@ -6,12 +10,12 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 
 public class TestUtil {
-    public static MerkleTree makeMerkleTree(List<byte[]> entries) {
-        return new MerkleTree(Util.sha256Instance(), new ListMerkleLeafDAO(entries));
+    public static VerifiableLog makeVerifiableLog(List<byte[]> entries) {
+        return new VerifiableLog(MerkleUtil.sha256Instance(), new ListMerkleLeafDAO(entries));
     }
 
-    public static MerkleTree makeMerkleTree(List<byte[]> entries, MemoizationStore memoizationStore) {
-        return new MerkleTree(Util.sha256Instance(), new ListMerkleLeafDAO(entries), memoizationStore);
+    public static VerifiableLog makeVerifiableLog(List<byte[]> entries, MemoizationStore memoizationStore) {
+        return new VerifiableLog(MerkleUtil.sha256Instance(), new ListMerkleLeafDAO(entries), memoizationStore);
     }
 
     public static List<String> bytesToString(List<byte[]> listOfByteArrays) {
@@ -26,7 +30,7 @@ public class TestUtil {
         return DatatypeConverter.parseHexBinary(input);
     }
 
-    private static class ListMerkleLeafDAO implements  MerkleLeafDAO {
+    private static class ListMerkleLeafDAO implements MerkleLeafDAO {
         private final List<byte[]> leafList;
 
         public ListMerkleLeafDAO(List<byte[]> leafList) {

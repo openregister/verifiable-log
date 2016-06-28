@@ -1,7 +1,8 @@
-package uk.gov.verifiablelog.merkletree;
+package uk.gov.verifiablelog;
 
 import org.junit.Test;
 import org.mockito.Mockito;
+import uk.gov.verifiablelog.dao.memoization.MemoizationStore;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,17 +18,17 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import static uk.gov.verifiablelog.merkletree.TestUtil.*;
+import static uk.gov.verifiablelog.TestUtil.*;
 
-public class MerkleTreeMockTests {
+public class VerifiableLogMockTests {
     private static final String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
     @Test()
     public void currentRoot_usesStoreToRetrieveAndSave_for_emptyTreeAndEmptyStore() {
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
-        MerkleTree merkleTree = makeMerkleTree(Collections.emptyList(), storeMock);
+        VerifiableLog verifiableLog = makeVerifiableLog(Collections.emptyList(), storeMock);
 
-        byte[] rootHash = merkleTree.currentRoot();
+        byte[] rootHash = verifiableLog.currentRoot();
 
         verify(storeMock, times(1)).get(0, 0);
         verify(storeMock, times(1)).put(0, 0, stringToBytes(emptyRootHash));
@@ -43,9 +44,10 @@ public class MerkleTreeMockTests {
                 stringToBytes("31")
         );
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
-        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
 
-        byte[] rootHash = merkleTree.currentRoot();
+        VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
+
+        byte[] rootHash = verifiableLog.currentRoot();
 
         verify(storeMock, times(7)).get(anyInt(), anyInt());
         verify(storeMock, times(7)).put(anyInt(), anyInt(), any(byte[].class));
@@ -73,9 +75,9 @@ public class MerkleTreeMockTests {
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
         when(storeMock.get(0, 4)).thenReturn(expectedRootHash);
 
-        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+        VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
 
-        byte[] rootHash = merkleTree.currentRoot();
+        byte[] rootHash = verifiableLog.currentRoot();
 
         verify(storeMock, times(1)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(0, 4);
@@ -86,7 +88,7 @@ public class MerkleTreeMockTests {
     @Test
     public void auditProof_retrievesAndUsesMemoizationStoreHashes() {
         /**
-         *  Tree and memoization expectations for a audit proof target node: 4, 8
+         *  Tree and memoization expectations for an audit proof target node: 4, 8
          *
          *  ==  target node
          *  M - memoized before the test
@@ -127,9 +129,9 @@ public class MerkleTreeMockTests {
         when(storeMock.get(0, 4)).thenReturn(expectedNodeHash04);
         when(storeMock.get(5, 1)).thenReturn(expectedNodeHash51);
 
-        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+        VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
 
-        List<byte[]> auditProof = merkleTree.auditProof(4, 8);
+        List<byte[]> auditProof = verifiableLog.auditProof(4, 8);
 
         verify(storeMock, times(5)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(5, 1);
@@ -192,9 +194,9 @@ public class MerkleTreeMockTests {
         when(storeMock.get(4, 2)).thenReturn(expectedNodeHash42);
         when(storeMock.get(6, 2)).thenReturn(expectedNodeHash62);
 
-        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+        VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
 
-        List<byte[]> consistencyProof = merkleTree.consistencyProof(4, 8);
+        List<byte[]> consistencyProof = verifiableLog.consistencyProof(4, 8);
 
         verify(storeMock, times(3)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(4, 4);
