@@ -1,4 +1,4 @@
-package uk.gov.verifiablelog.dao.memoization;
+package uk.gov.verifiablelog.store.memoization;
 
 import java.util.TreeMap;
 

@@ -2,7 +2,7 @@ package uk.gov.verifiablelog;
 
 import org.junit.Test;
 import org.mockito.Mockito;
-import uk.gov.verifiablelog.dao.memoization.MemoizationStore;
+import uk.gov.verifiablelog.store.memoization.MemoizationStore;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -1,14 +1,12 @@
 package uk.gov.verifiablelog;
 
-import uk.gov.verifiablelog.merkletree.MerkleUtil;
-
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static uk.gov.verifiablelog.merkletree.MerkleUtil.branchHash;
-import static uk.gov.verifiablelog.merkletree.MerkleUtil.k;
+import static uk.gov.verifiablelog.Util.branchHash;
+import static uk.gov.verifiablelog.Util.k;
 
 /**
  * Verifies proofs provided by a Verifiable Log as implemented by {@link VerifiableLog}
@@ -25,7 +23,7 @@ public class VerifiableLogVerification {
      * @return true if the leaf data can be verified against the audit proof, otherwise false
      */
     public static boolean isValidAuditProof(byte[] expectedRootHash, int treeSize, int leafIndex, List<byte[]> auditProof, byte[] leafData) {
-        byte[] computedRootHash = rootHashFromAuditProof(treeSize, leafIndex, new ArrayList<>(auditProof), leafData, MerkleUtil.sha256Instance());
+        byte[] computedRootHash = rootHashFromAuditProof(treeSize, leafIndex, new ArrayList<>(auditProof), leafData, Util.sha256Instance());
         return Arrays.equals(computedRootHash, expectedRootHash);
     }
 
@@ -52,7 +50,7 @@ public class VerifiableLogVerification {
             if (!auditProof.isEmpty()) {
                 throw new IllegalStateException("Should have an empty audit path for trees of size 1");
             }
-            return MerkleUtil.leafHash(leafData, digest);
+            return Util.leafHash(leafData, digest);
         }
         int k = k(treeSize);
         byte[] nextHash = auditProof.remove(auditProof.size() - 1);
@@ -66,11 +64,11 @@ public class VerifiableLogVerification {
     }
 
     private static byte[] newRootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot) {
-        return rootHashFromConsistencyProof(low, high, consistencyProof, oldRoot, MerkleUtil.sha256Instance(), true, true);
+        return rootHashFromConsistencyProof(low, high, consistencyProof, oldRoot, Util.sha256Instance(), true, true);
     }
 
     private static byte[] oldRootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot) {
-        return rootHashFromConsistencyProof(low, high, consistencyProof, oldRoot, MerkleUtil.sha256Instance(), false, true);
+        return rootHashFromConsistencyProof(low, high, consistencyProof, oldRoot, Util.sha256Instance(), false, true);
     }
 
     private static byte[] rootHashFromConsistencyProof(int low, int high, List<byte[]> consistencyProof, byte[] oldRoot, MessageDigest digest, boolean computeNewRoot, boolean startFromOldRoot) {
@@ -81,18 +79,18 @@ public class VerifiableLogVerification {
             }
             return consistencyProof.remove(consistencyProof.size() - 1);
         }
-        int k = MerkleUtil.k(high);
+        int k = Util.k(high);
         byte[] nextHash = consistencyProof.remove(consistencyProof.size() - 1);
         if (low <= k) {
             byte[] leftChild = rootHashFromConsistencyProof(low, k, consistencyProof, oldRoot, digest, computeNewRoot, startFromOldRoot);
             if (computeNewRoot) {
-                return MerkleUtil.branchHash(leftChild, nextHash, digest);
+                return Util.branchHash(leftChild, nextHash, digest);
             } else {
                 return leftChild;
             }
         } else {
             byte[] rightChild = rootHashFromConsistencyProof(low - k, high - k, consistencyProof, oldRoot, digest, computeNewRoot, false);
-            return MerkleUtil.branchHash(nextHash, rightChild, digest);
+            return Util.branchHash(nextHash, rightChild, digest);
         }
     }
 }

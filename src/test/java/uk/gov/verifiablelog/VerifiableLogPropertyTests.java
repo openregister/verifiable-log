@@ -1,9 +1,9 @@
 package uk.gov.verifiablelog;
 
 import org.junit.Test;
-import uk.gov.verifiablelog.dao.memoization.InMemory;
-import uk.gov.verifiablelog.dao.memoization.InMemoryPowOfTwo;
-import uk.gov.verifiablelog.dao.memoization.MemoizationStore;
+import uk.gov.verifiablelog.store.memoization.InMemory;
+import uk.gov.verifiablelog.store.memoization.InMemoryPowOfTwo;
+import uk.gov.verifiablelog.store.memoization.MemoizationStore;
 
 import java.util.List;
 

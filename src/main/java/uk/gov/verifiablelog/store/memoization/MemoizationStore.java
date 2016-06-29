@@ -1,4 +1,4 @@
-package uk.gov.verifiablelog.dao.memoization;
+package uk.gov.verifiablelog.store.memoization;
 
 /**
  * Defines the contract through which a consumer of a {@link MemoizationStore} can query and update a set of known

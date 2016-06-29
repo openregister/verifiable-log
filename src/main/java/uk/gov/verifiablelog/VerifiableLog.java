@@ -1,9 +1,8 @@
 package uk.gov.verifiablelog;
 
-import uk.gov.verifiablelog.dao.memoization.DoNothing;
-import uk.gov.verifiablelog.dao.memoization.MemoizationStore;
-import uk.gov.verifiablelog.dao.MerkleLeafDAO;
-import uk.gov.verifiablelog.merkletree.MerkleUtil;
+import uk.gov.verifiablelog.store.memoization.DoNothing;
+import uk.gov.verifiablelog.store.memoization.MemoizationStore;
+import uk.gov.verifiablelog.store.MerkleLeafStore;
 
 import java.security.MessageDigest;
 import java.util.*;
@@ -15,29 +14,29 @@ import java.util.*;
 public class VerifiableLog {
 
     private final MessageDigest messageDigest;
-    private final MerkleLeafDAO merkleLeafDAO;
+    private final MerkleLeafStore merkleLeafStore;
     private final MemoizationStore memoizationStore;
 
     /**
      * Creates a new instance of a {@link VerifiableLog} object that does not memoize Merkle Tree root hashes of
      * intermediate subtrees.
      * @param messageDigest The algorithm to use when creating hash values of leaf data and intermediate Merkle Tree nodes
-     * @param merkleLeafDAO An object providing access to the raw leaf data
+     * @param merkleLeafStore An object providing access to the raw leaf data
      */
-    public VerifiableLog(MessageDigest messageDigest, MerkleLeafDAO merkleLeafDAO) {
-        this(messageDigest, merkleLeafDAO, null);
+    public VerifiableLog(MessageDigest messageDigest, MerkleLeafStore merkleLeafStore) {
+        this(messageDigest, merkleLeafStore, null);
     }
 
     /**
      * Creates a new instance of a {@link VerifiableLog} object that memoizes Merkle Tree root hashes of
      * intermediate subtrees using the a {@link MemoizationStore}.
      * @param messageDigest The algorithm to use when creating hash values of leaf data and intermediate Merkle Tree nodes
-     * @param merkleLeafDAO An object providing access to the raw leaf data
+     * @param merkleLeafStore An object providing access to the raw leaf data
      * @param memoizationStore The {@link MemoizationStore} to use when memoizing intermediate subtree root hashes
      */
-    public VerifiableLog(MessageDigest messageDigest, MerkleLeafDAO merkleLeafDAO, MemoizationStore memoizationStore) {
+    public VerifiableLog(MessageDigest messageDigest, MerkleLeafStore merkleLeafStore, MemoizationStore memoizationStore) {
         this.messageDigest = messageDigest;
-        this.merkleLeafDAO = merkleLeafDAO;
+        this.merkleLeafStore = merkleLeafStore;
         this.memoizationStore = memoizationStore == null ? new DoNothing(): memoizationStore;
     }
 
@@ -46,7 +45,7 @@ public class VerifiableLog {
      * @return The Merkle Tree root hash
      */
     public byte[] currentRoot() {
-        return subtreeHash(0, merkleLeafDAO.totalLeaves());
+        return subtreeHash(0, merkleLeafStore.totalLeaves());
     }
 
     /**
@@ -83,7 +82,7 @@ public class VerifiableLog {
             consistencySet.add(subtreeHash(start, high));
             return consistencySet;
         }
-        int k = MerkleUtil.k(high);
+        int k = Util.k(high);
         if (low <= k) {
             List<byte[]> subtreeConsistencySet = subtreeConsistencyProof(low, k, start, startFromOldRoot);
             subtreeConsistencySet.add(subtreeHash(start + k, high - k));
@@ -100,7 +99,7 @@ public class VerifiableLog {
         if (snapshotSize <= 1) {
             return new ArrayList<>();
         }
-        int k = MerkleUtil.k(snapshotSize);
+        int k = Util.k(snapshotSize);
         if (leafIndex < k) {
             List<byte[]> subtreePath = subtreeAuditProof(leafIndex, start, k);
             subtreePath.add(subtreeHash(start + k, snapshotSize - k));
@@ -117,12 +116,12 @@ public class VerifiableLog {
         if (size == 0) {
             return emptyTreeHash();
         } else if (size == 1) {
-            return MerkleUtil.leafHash(merkleLeafDAO.getLeafValue(start), messageDigest);
+            return Util.leafHash(merkleLeafStore.getLeafValue(start), messageDigest);
         } else {
-            int k = MerkleUtil.k(size);
+            int k = Util.k(size);
             byte[] leftSubtreeHash = subtreeHash(start, k);
             byte[] rightSubtreeHash = subtreeHash(k + start, size - k);
-            return MerkleUtil.branchHash(leftSubtreeHash, rightSubtreeHash, messageDigest);
+            return Util.branchHash(leftSubtreeHash, rightSubtreeHash, messageDigest);
         }
     }
 

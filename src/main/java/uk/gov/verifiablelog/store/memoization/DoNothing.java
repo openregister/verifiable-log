@@ -1,4 +1,4 @@
-package uk.gov.verifiablelog.dao.memoization;
+package uk.gov.verifiablelog.store.memoization;
 
 /**
  * A dummy {@link MemoizationStore} that does not store Merkle Tree root hashes for intermediate subtrees of any size.

@@ -5,9 +5,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import uk.gov.verifiablelog.dao.memoization.InMemory;
-import uk.gov.verifiablelog.dao.memoization.InMemoryPowOfTwo;
-import uk.gov.verifiablelog.dao.memoization.MemoizationStore;
+import uk.gov.verifiablelog.store.memoization.InMemory;
+import uk.gov.verifiablelog.store.memoization.InMemoryPowOfTwo;
+import uk.gov.verifiablelog.store.memoization.MemoizationStore;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.*;

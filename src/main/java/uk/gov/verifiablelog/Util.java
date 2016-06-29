@@ -1,4 +1,4 @@
-package uk.gov.verifiablelog.merkletree;
+package uk.gov.verifiablelog;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -6,14 +6,14 @@ import java.security.NoSuchAlgorithmException;
 /**
  * A utility class that provides commonly used operations when working with Merkle Trees.
  */
-public class MerkleUtil {
+class Util {
 
     /**
      * Calculates the largest power of two smaller than the given value.
      * @param n An integer that must be greater than 1
      * @return The largest power of two smaller than n
      */
-    public static int k(int n) {
+    protected static int k(int n) {
         if (n < 2) {
             throw new IllegalArgumentException("n must be greater than 1");
         }
@@ -34,7 +34,7 @@ public class MerkleUtil {
      * @param digest The algorithm to use when creating hash values of Merkle Tree nodes
      * @return A Merkle Tree hash
      */
-    public static byte[] branchHash(byte[] left, byte[] right, MessageDigest digest) {
+    protected static byte[] branchHash(byte[] left, byte[] right, MessageDigest digest) {
         digest.update((byte) 0x01);
         digest.update(left);
         digest.update(right);
@@ -47,7 +47,7 @@ public class MerkleUtil {
      * @param digest The algorithm to use when creating a hash value of the leaf data
      * @return A merkle tree hash
      */
-    public static byte[] leafHash(byte[] leafData, MessageDigest digest) {
+    protected static byte[] leafHash(byte[] leafData, MessageDigest digest) {
         digest.update((byte) 0x00);
         digest.update(leafData);
         return digest.digest();
@@ -57,7 +57,7 @@ public class MerkleUtil {
      * An instance of the sha-256 algorithm for message digest.
      * @return A new sha-256 message digest
      */
-    public static MessageDigest sha256Instance() {
+    protected static MessageDigest sha256Instance() {
         try {
             return MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {

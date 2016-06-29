@@ -1,9 +1,9 @@
-package uk.gov.verifiablelog.dao;
+package uk.gov.verifiablelog.store;
 
 /**
- * Defines the contract through which a consumer of a {@link MerkleLeafDAO} can query for leaf data.
+ * Defines the contract through which a consumer of a {@link MerkleLeafStore} can query for leaf data.
  */
-public interface MerkleLeafDAO {
+public interface MerkleLeafStore {
 
     /**
      * Gets a leaf value by its index.
