@@ -1,7 +1,8 @@
-package uk.gov.verifiablelog.merkletree;
+package uk.gov.verifiablelog;
 
 import org.junit.Test;
 import org.mockito.Mockito;
+import uk.gov.verifiablelog.store.memoization.MemoizationStore;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,17 +18,17 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import static uk.gov.verifiablelog.merkletree.TestUtil.*;
+import static uk.gov.verifiablelog.TestUtil.*;
 
-public class MerkleTreeMockTests {
+public class VerifiableLogMockTests {
     private static final String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
     @Test()
     public void currentRoot_usesStoreToRetrieveAndSave_for_emptyTreeAndEmptyStore() {
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
-        MerkleTree merkleTree = makeMerkleTree(Collections.emptyList(), storeMock);
+        VerifiableLog verifiableLog = makeVerifiableLog(Collections.emptyList(), storeMock);
 
-        byte[] rootHash = merkleTree.currentRoot();
+        byte[] rootHash = verifiableLog.currentRoot();
 
         verify(storeMock, times(1)).get(0, 0);
         verify(storeMock, times(1)).put(0, 0, stringToBytes(emptyRootHash));
@@ -43,9 +44,10 @@ public class MerkleTreeMockTests {
                 stringToBytes("31")
         );
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
-        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
 
-        byte[] rootHash = merkleTree.currentRoot();
+        VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
+
+        byte[] rootHash = verifiableLog.currentRoot();
 
         verify(storeMock, times(7)).get(anyInt(), anyInt());
         verify(storeMock, times(7)).put(anyInt(), anyInt(), any(byte[].class));
@@ -73,9 +75,9 @@ public class MerkleTreeMockTests {
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
         when(storeMock.get(0, 4)).thenReturn(expectedRootHash);
 
-        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+        VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
 
-        byte[] rootHash = merkleTree.currentRoot();
+        byte[] rootHash = verifiableLog.currentRoot();
 
         verify(storeMock, times(1)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(0, 4);
@@ -84,15 +86,15 @@ public class MerkleTreeMockTests {
     }
 
     @Test
-    public void pathToRootAtSnapshot_retrievesAndUsesMemoizationStoreHashes() {
+    public void auditProof_retrievesAndUsesMemoizationStoreHashes() {
         /**
-         *  Tree and memoization expectations for audit proof target node: 4, 8
+         *  Tree and memoization expectations for an audit proof target node: 4, 8
          *
          *  ==  target node
          *  M - memoized before the test
          *  G - get call on MemoizationStore expected
          *  P - put call on MemoizationStore expected
-         *  * - pathToRootAtSnapshot result node
+         *  * - auditProof result node
          *
          *
          *                     08
@@ -127,9 +129,9 @@ public class MerkleTreeMockTests {
         when(storeMock.get(0, 4)).thenReturn(expectedNodeHash04);
         when(storeMock.get(5, 1)).thenReturn(expectedNodeHash51);
 
-        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+        VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
 
-        List<byte[]> pathToRoot = merkleTree.pathToRootAtSnapshot(4, 8);
+        List<byte[]> auditProof = verifiableLog.auditProof(4, 8);
 
         verify(storeMock, times(5)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(5, 1);
@@ -143,21 +145,21 @@ public class MerkleTreeMockTests {
         verify(storeMock, times(1)).put(eq(7), eq(1), any(byte[].class));
         verify(storeMock, times(1)).put(eq(6), eq(1), any(byte[].class));
 
-        assertThat(pathToRoot, hasSize(3));
-        assertThat(pathToRoot.get(0), is(expectedNodeHash51));
-        assertThat(pathToRoot.get(2), is(expectedNodeHash04));
+        assertThat(auditProof, hasSize(3));
+        assertThat(auditProof.get(0), is(expectedNodeHash51));
+        assertThat(auditProof.get(2), is(expectedNodeHash04));
     }
 
     @Test
-    public void snapshotConsistency_retrievesAndUsesMemoizationStoreHashes() {
+    public void consistencyProof_retrievesAndUsesMemoizationStoreHashes() {
         /**
-         *  Tree and memoization expectations for audit proof target node: 4, 8
+         *  Tree and memoization expectations for a consistency proof between trees of sizes 4 and 8
          *
          *  ==  target node
          *  M - memoized before the test
          *  G - get call on MemoizationStore expected
          *  P - put call on MemoizationStore expected
-         *  * - pathToRootAtSnapshot result node
+         *  * - consistencyProof result node
          *
          *
          *                     08
@@ -192,9 +194,9 @@ public class MerkleTreeMockTests {
         when(storeMock.get(4, 2)).thenReturn(expectedNodeHash42);
         when(storeMock.get(6, 2)).thenReturn(expectedNodeHash62);
 
-        MerkleTree merkleTree = makeMerkleTree(leafValues, storeMock);
+        VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
 
-        List<byte[]> snapshotConsistency = merkleTree.snapshotConsistency(4, 8);
+        List<byte[]> consistencyProof = verifiableLog.consistencyProof(4, 8);
 
         verify(storeMock, times(3)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(4, 4);
@@ -204,7 +206,7 @@ public class MerkleTreeMockTests {
         verify(storeMock, times(1)).put(anyInt(), anyInt(), any(byte[].class));
         verify(storeMock, times(1)).put(eq(4), eq(4), any(byte[].class));
 
-        assertThat(snapshotConsistency, hasSize(1));
+        assertThat(consistencyProof, hasSize(1));
     }
 
         private void verifyStoreCalledToGetAndPut(MemoizationStore storeMock, Integer start, Integer size) {

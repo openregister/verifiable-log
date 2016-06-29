@@ -1,4 +1,4 @@
-package uk.gov.verifiablelog.merkletree;
+package uk.gov.verifiablelog.store.memoization;
 
 import org.junit.Test;
 
@@ -8,7 +8,7 @@ import static org.quicktheories.quicktheories.QuickTheory.qt;
 import static org.quicktheories.quicktheories.generators.SourceDSL.integers;
 import static org.quicktheories.quicktheories.generators.SourceDSL.strings;
 
-import static uk.gov.verifiablelog.merkletree.TestUtil.*;
+import static uk.gov.verifiablelog.TestUtil.*;
 
 public class InMemoryTests {
     @Test

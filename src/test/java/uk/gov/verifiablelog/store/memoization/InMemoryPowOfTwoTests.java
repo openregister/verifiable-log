@@ -1,4 +1,4 @@
-package uk.gov.verifiablelog.merkletree;
+package uk.gov.verifiablelog.store.memoization;
 
 import org.junit.Test;
 
@@ -6,7 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 
-import static uk.gov.verifiablelog.merkletree.TestUtil.*;
+import static uk.gov.verifiablelog.TestUtil.*;
 
 public class InMemoryPowOfTwoTests {
     @Test
