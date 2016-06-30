@@ -1,11 +1,20 @@
+plugins {
+    id 'com.jfrog.bintray' version '1.6'
+}
+
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply from: 'external-dependencies.gradle'
 apply from: 'idea-config.gradle'
 
+def majorMinorVersion = '0.1'
+def buildNumber = System.getenv('TRAVIS_BUILD_NUMBER') ? System.getenv('TRAVIS_BUILD_NUMBER') : '0000'
+def versionNumber = majorMinorVersion + '.' + buildNumber
+
 group 'verifiable-log'
-version '0.1-SNAPSHOT'
+version versionNumber
 
 sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
@@ -53,6 +62,33 @@ jar {
                     "Main-Class": "uk.gov.verifiablelog.Application",
                     "Class-Path": configurations.runtime.findAll { !it.directory }.collect { it.name }.join(' ')
             )
+        }
+    }
+}
+
+publishing {
+    publications {
+        JarPublication(MavenPublication) {
+            from components.java
+            groupId 'verifiable-log'
+            artifactId 'verifiable-log'
+            version versionNumber
+        }
+    }
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_PASS')
+    publications = ['JarPublication']
+    publish = true
+    pkg {
+        repo = 'openregister'
+        name = 'verifiable-log'
+        userOrg = 'openregister'
+        licenses = 'MIT'
+        version {
+            name = versionNumber
         }
     }
 }
