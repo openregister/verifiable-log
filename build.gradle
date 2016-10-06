@@ -59,7 +59,6 @@ jar {
         }
         manifest {
             attributes(
-                    "Main-Class": "uk.gov.verifiablelog.Application",
                     "Class-Path": configurations.runtime.findAll { !it.directory }.collect { it.name }.join(' ')
             )
         }
