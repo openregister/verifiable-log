@@ -24,11 +24,11 @@ public class VerifiableLogMockTests {
     private static final String emptyRootHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
     @Test()
-    public void currentRoot_usesStoreToRetrieveAndSave_for_emptyTreeAndEmptyStore() {
+    public void getCurrentRootHash_usesStoreToRetrieveAndSave_for_emptyTreeAndEmptyStore() {
         MemoizationStore storeMock = Mockito.mock(MemoizationStore.class);
         VerifiableLog verifiableLog = makeVerifiableLog(Collections.emptyList(), storeMock);
 
-        byte[] rootHash = verifiableLog.currentRoot();
+        byte[] rootHash = verifiableLog.getCurrentRootHash();
 
         verify(storeMock, times(1)).get(0, 0);
         verify(storeMock, times(1)).put(0, 0, stringToBytes(emptyRootHash));
@@ -36,7 +36,7 @@ public class VerifiableLogMockTests {
     }
 
     @Test
-    public void currentRoot_usesStoreToRetrieveAndSave_for_treeWithLeaves() {
+    public void getCurrentRootHash_usesStoreToRetrieveAndSave_for_treeWithLeaves() {
         List<byte[]> leafValues = Arrays.asList(
                 stringToBytes("01"),
                 stringToBytes("11"),
@@ -47,7 +47,7 @@ public class VerifiableLogMockTests {
 
         VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
 
-        byte[] rootHash = verifiableLog.currentRoot();
+        byte[] rootHash = verifiableLog.getCurrentRootHash();
 
         verify(storeMock, times(7)).get(anyInt(), anyInt());
         verify(storeMock, times(7)).put(anyInt(), anyInt(), any(byte[].class));
@@ -64,7 +64,7 @@ public class VerifiableLogMockTests {
     }
 
     @Test
-    public void currentRoot_retrievesAndUsesMemoizationStoreHashes() {
+    public void getCurrentRootHash_retrievesAndUsesMemoizationStoreHashes() {
         List<byte[]> leafValues = Arrays.asList(
                 stringToBytes("01"),
                 stringToBytes("11"),
@@ -77,7 +77,7 @@ public class VerifiableLogMockTests {
 
         VerifiableLog verifiableLog = makeVerifiableLog(leafValues, storeMock);
 
-        byte[] rootHash = verifiableLog.currentRoot();
+        byte[] rootHash = verifiableLog.getCurrentRootHash();
 
         verify(storeMock, times(1)).get(anyInt(), anyInt());
         verify(storeMock, times(1)).get(0, 4);

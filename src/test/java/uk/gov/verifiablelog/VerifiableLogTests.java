@@ -59,34 +59,58 @@ public class VerifiableLogTests {
 
     @Test
     public void expectedRootFromEmptyVerifiableLog() {
-        assertThat(bytesToString(verifiableLog.currentRoot()), is(emptyRootHash));
+        assertThat(bytesToString(verifiableLog.getCurrentRootHash()), is(emptyRootHash));
     }
 
     @Test
     public void expectedRootFromVerifiableLogWithLeaves() {
         leafValues.add(TEST_INPUTS.get(0));
-        assertThat(bytesToString(verifiableLog.currentRoot()), is("6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"));
+        assertThat(bytesToString(verifiableLog.getCurrentRootHash()), is("6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"));
 
         leafValues.add(TEST_INPUTS.get(1));
-        assertThat(bytesToString(verifiableLog.currentRoot()), is("fac54203e7cc696cf0dfcb42c92a1d9dbaf70ad9e621f4bd8d98662f00e3c125"));
+        assertThat(bytesToString(verifiableLog.getCurrentRootHash()), is("fac54203e7cc696cf0dfcb42c92a1d9dbaf70ad9e621f4bd8d98662f00e3c125"));
 
         leafValues.add(TEST_INPUTS.get(2));
-        assertThat(bytesToString(verifiableLog.currentRoot()), is("aeb6bcfe274b70a14fb067a5e5578264db0fa9b51af5e0ba159158f329e06e77"));
+        assertThat(bytesToString(verifiableLog.getCurrentRootHash()), is("aeb6bcfe274b70a14fb067a5e5578264db0fa9b51af5e0ba159158f329e06e77"));
 
         leafValues.add(TEST_INPUTS.get(3));
-        assertThat(bytesToString(verifiableLog.currentRoot()), is("d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7"));
+        assertThat(bytesToString(verifiableLog.getCurrentRootHash()), is("d37ee418976dd95753c1c73862b9398fa2a2cf9b4ff0fdfe8b30cd95209614b7"));
 
         leafValues.add(TEST_INPUTS.get(4));
-        assertThat(bytesToString(verifiableLog.currentRoot()), is("4e3bbb1f7b478dcfe71fb631631519a3bca12c9aefca1612bfce4c13a86264d4"));
+        assertThat(bytesToString(verifiableLog.getCurrentRootHash()), is("4e3bbb1f7b478dcfe71fb631631519a3bca12c9aefca1612bfce4c13a86264d4"));
 
         leafValues.add(TEST_INPUTS.get(5));
-        assertThat(bytesToString(verifiableLog.currentRoot()), is("76e67dadbcdf1e10e1b74ddc608abd2f98dfb16fbce75277b5232a127f2087ef"));
+        assertThat(bytesToString(verifiableLog.getCurrentRootHash()), is("76e67dadbcdf1e10e1b74ddc608abd2f98dfb16fbce75277b5232a127f2087ef"));
 
         leafValues.add(TEST_INPUTS.get(6));
-        assertThat(bytesToString(verifiableLog.currentRoot()), is("ddb89be403809e325750d3d263cd78929c2942b7942a34b77e122c9594a74c8c"));
+        assertThat(bytesToString(verifiableLog.getCurrentRootHash()), is("ddb89be403809e325750d3d263cd78929c2942b7942a34b77e122c9594a74c8c"));
 
         leafValues.add(TEST_INPUTS.get(7));
-        assertThat(bytesToString(verifiableLog.currentRoot()), is("5dc9da79a70659a9ad559cb701ded9a2ab9d823aad2f4960cfe370eff4604328"));
+        assertThat(bytesToString(verifiableLog.getCurrentRootHash()), is("5dc9da79a70659a9ad559cb701ded9a2ab9d823aad2f4960cfe370eff4604328"));
+    }
+
+    @Test
+    public void getSpecificRootHash_returnsSpecificRootHash_whenValidStartIndexAndTreeSizeSupplied() {
+        leafValues.add(TEST_INPUTS.get(0));
+        leafValues.add(TEST_INPUTS.get(1));
+        leafValues.add(TEST_INPUTS.get(2));
+        leafValues.add(TEST_INPUTS.get(3));
+
+        assertThat(bytesToString(verifiableLog.getSpecificRootHash(1, 2)), is("e8bba54899f34c767fa1b827f136cb9fde1e3b15ff9a0a57781fc0832e523548"));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void getSpecificRootHash_throwsIndexOutOfBoundsException_whenInvalidStartIndexSupplied() {
+        leafValues.add(TEST_INPUTS.get(0));
+
+        verifiableLog.getSpecificRootHash(2, 1);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void getSpecificRootHash_throwsIndexOutOfBoundsException_whenInvalidTreeSizeSupplied() {
+        leafValues.add(TEST_INPUTS.get(0));
+
+        verifiableLog.getSpecificRootHash(0, 2);
     }
 
     @Test
@@ -151,4 +175,3 @@ public class VerifiableLogTests {
                 "bc1a0643b12e4d2d7c77918f44e0f4f79a838b6cf9ec5b5c283e1f4d88599e6b")));
     }
 }
-

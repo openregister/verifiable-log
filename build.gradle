@@ -9,7 +9,7 @@ apply plugin: 'maven-publish'
 apply from: 'external-dependencies.gradle'
 apply from: 'idea-config.gradle'
 
-def majorMinorVersion = '0.1'
+def majorMinorVersion = '0.2'
 def buildNumber = System.getenv('TRAVIS_BUILD_NUMBER') ? System.getenv('TRAVIS_BUILD_NUMBER') : '0000'
 def versionNumber = majorMinorVersion + '.' + buildNumber
 
