@@ -96,21 +96,14 @@ public class VerifiableLogTests {
         leafValues.add(TEST_INPUTS.get(2));
         leafValues.add(TEST_INPUTS.get(3));
 
-        assertThat(bytesToString(verifiableLog.getSpecificRootHash(1, 2)), is("e8bba54899f34c767fa1b827f136cb9fde1e3b15ff9a0a57781fc0832e523548"));
-    }
-
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void getSpecificRootHash_throwsIndexOutOfBoundsException_whenInvalidStartIndexSupplied() {
-        leafValues.add(TEST_INPUTS.get(0));
-
-        verifiableLog.getSpecificRootHash(2, 1);
+        assertThat(bytesToString(verifiableLog.getSpecificRootHash(2)), is("fac54203e7cc696cf0dfcb42c92a1d9dbaf70ad9e621f4bd8d98662f00e3c125"));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void getSpecificRootHash_throwsIndexOutOfBoundsException_whenInvalidTreeSizeSupplied() {
         leafValues.add(TEST_INPUTS.get(0));
 
-        verifiableLog.getSpecificRootHash(0, 2);
+        verifiableLog.getSpecificRootHash(2);
     }
 
     @Test

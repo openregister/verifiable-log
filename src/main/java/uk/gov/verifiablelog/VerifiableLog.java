@@ -50,12 +50,11 @@ public class VerifiableLog {
 
     /**
      * Gets the specific root hash of the Verifiable Log from the given start index and for the given tree size.
-     * @param startIndex The zero-based index of the first leaf in the subtree
      * @param treeSize The number of leaves in the Verifiable Log which should be included in the root hash
      * @return The Merkle Tree root hash
      */
-    public byte[] getSpecificRootHash(int startIndex, int treeSize) {
-        return subtreeHash(startIndex, treeSize);
+    public byte[] getSpecificRootHash(int treeSize) {
+        return subtreeHash(0, treeSize);
     }
 
     /**
