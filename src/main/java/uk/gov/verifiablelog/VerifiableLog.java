@@ -49,7 +49,7 @@ public class VerifiableLog {
     }
 
     /**
-     * Gets the specific root hash of the Verifiable Log from the given start index and for the given tree size.
+     * Gets the specific root hash of the Verifiable Log for the given tree size.
      * @param treeSize The number of leaves in the Verifiable Log which should be included in the root hash
      * @return The Merkle Tree root hash
      */
