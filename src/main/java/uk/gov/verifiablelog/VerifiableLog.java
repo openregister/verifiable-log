@@ -41,11 +41,20 @@ public class VerifiableLog {
     }
 
     /**
-     * The root hash of the Verifiable Log created from all current leaf values ordered by index.
+     * Gets the current root hash of the Verifiable Log created from all current leaf values ordered by index.
      * @return The Merkle Tree root hash
      */
-    public byte[] currentRoot() {
+    public byte[] getCurrentRootHash() {
         return subtreeHash(0, merkleLeafStore.totalLeaves());
+    }
+
+    /**
+     * Gets the specific root hash of the Verifiable Log for the given tree size.
+     * @param treeSize The number of leaves in the Verifiable Log which should be included in the root hash
+     * @return The Merkle Tree root hash
+     */
+    public byte[] getSpecificRootHash(int treeSize) {
+        return subtreeHash(0, treeSize);
     }
 
     /**
@@ -130,12 +139,11 @@ public class VerifiableLog {
 
         if (result != null) {
             return result;
-        } else {
-            byte[] realResult = computeSubtreeHash(start, size);
-            memoizationStore.put(start, size, realResult);
-            return realResult;
         }
 
+        byte[] realResult = computeSubtreeHash(start, size);
+        memoizationStore.put(start, size, realResult);
+        return realResult;
     }
 
     private byte[] emptyTreeHash() {

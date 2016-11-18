@@ -26,16 +26,16 @@ public class VerifiableLogPropertyTests {
 
                     MemoizationStore inMemoryMs = new InMemory();
                     VerifiableLog memoizedLog = makeVerifiableLog(entries, inMemoryMs);
-                    memoizedLog.currentRoot();
+                    memoizedLog.getCurrentRootHash();
 
                     MemoizationStore inMemoryPowOfTwoMs = new InMemoryPowOfTwo();
                     VerifiableLog memoizedPowOfTwoLog = makeVerifiableLog(entries, inMemoryPowOfTwoMs);
-                    memoizedPowOfTwoLog.currentRoot();
+                    memoizedPowOfTwoLog.getCurrentRootHash();
 
                     VerifiableLog nonMemoizedLog = makeVerifiableLog(entries);
 
-                    assertThat(bytesToString(memoizedLog.currentRoot()), is(bytesToString(nonMemoizedLog.currentRoot())));
-                    assertThat(bytesToString(memoizedPowOfTwoLog.currentRoot()), is(bytesToString(nonMemoizedLog.currentRoot())));
+                    assertThat(bytesToString(memoizedLog.getCurrentRootHash()), is(bytesToString(nonMemoizedLog.getCurrentRootHash())));
+                    assertThat(bytesToString(memoizedPowOfTwoLog.getCurrentRootHash()), is(bytesToString(nonMemoizedLog.getCurrentRootHash())));
                 });
     }
 
@@ -47,7 +47,7 @@ public class VerifiableLogPropertyTests {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
                     VerifiableLog verifiableLog = makeVerifiableLog(entries);
                     List<byte[]> auditProof = verifiableLog.auditProof(leafIndex, entries.size());
-                    assertThat(VerifiableLogVerification.isValidAuditProof(verifiableLog.currentRoot(), entries.size(), leafIndex, auditProof, entries.get(leafIndex)), is(true));
+                    assertThat(VerifiableLogVerification.isValidAuditProof(verifiableLog.getCurrentRootHash(), entries.size(), leafIndex, auditProof, entries.get(leafIndex)), is(true));
                 });
     }
 
@@ -60,11 +60,11 @@ public class VerifiableLogPropertyTests {
 
                     MemoizationStore inMemoryMs = new InMemory();
                     VerifiableLog memoizedLog = makeVerifiableLog(entries, inMemoryMs);
-                    memoizedLog.currentRoot();
+                    memoizedLog.getCurrentRootHash();
 
                     MemoizationStore inMemoryPowOfTwoMs = new InMemoryPowOfTwo();
                     VerifiableLog memoizedPowOfTwoLog = makeVerifiableLog(entries, inMemoryPowOfTwoMs);
-                    memoizedPowOfTwoLog.currentRoot();
+                    memoizedPowOfTwoLog.getCurrentRootHash();
 
                     VerifiableLog nonMemoizedLog = makeVerifiableLog(entries);
 
@@ -84,8 +84,8 @@ public class VerifiableLogPropertyTests {
                 .check((entryStrings, low, high) -> {
                     List<byte[]> entries = entryStrings.stream().map(String::getBytes).collect(toList());
                     VerifiableLog verifiableLog = makeVerifiableLog(entries);
-                    byte[] lowRoot = makeVerifiableLog(entries.subList(0, low)).currentRoot();
-                    byte[] highRoot = makeVerifiableLog(entries.subList(0, high)).currentRoot();
+                    byte[] lowRoot = makeVerifiableLog(entries.subList(0, low)).getCurrentRootHash();
+                    byte[] highRoot = makeVerifiableLog(entries.subList(0, high)).getCurrentRootHash();
                     List<byte[]> consistencyProof = verifiableLog.consistencyProof(low, high);
 
                     return VerifiableLogVerification.isValidConsistencyProof(low, lowRoot, high, highRoot, consistencyProof);
@@ -101,11 +101,11 @@ public class VerifiableLogPropertyTests {
 
                     MemoizationStore inMemoryMs = new InMemory();
                     VerifiableLog memoizedLog = makeVerifiableLog(entries, inMemoryMs);
-                    memoizedLog.currentRoot();
+                    memoizedLog.getCurrentRootHash();
 
                     MemoizationStore inMemoryPowOfTwoMs = new InMemoryPowOfTwo();
                     VerifiableLog memoizedPowOfTwoLog = makeVerifiableLog(entries, inMemoryPowOfTwoMs);
-                    memoizedPowOfTwoLog.currentRoot();
+                    memoizedPowOfTwoLog.getCurrentRootHash();
 
                     VerifiableLog nonMemoizedLog = makeVerifiableLog(entries);
 
